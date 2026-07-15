@@ -1,0 +1,1942 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Treinamento Gamificado — Algoritmo e Lógica de Programação</title>
+<style>
+:root{
+  --bg:#0d1117; --bg2:#151b23; --bg3:#1c2530; --line:#2a3341;
+  --text:#e6edf3; --text-dim:#9aa7b5; --text-faint:#6b7787;
+  --w1:#f2a63c; --w1-bg:#3a2c14; /* Mundo 1 amber */
+  --w2:#31c3d6; --w2-bg:#123338; /* Mundo 2 cyan */
+  --w3:#a97bf0; --w3-bg:#2a2140; /* Mundo 3 violet */
+  --w4:#4fce7a; --w4-bg:#153524; /* Mundo 4 green */
+  --ok:#4fce7a; --err:#e5637a; --warn:#f2a63c;
+  --radius:12px;
+  --code-bg:#0a0e14;
+  --font: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono: ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--font);
+  line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+#app{max-width:920px;margin:0 auto;padding:0 16px 64px;}
+a{color:var(--w2);}
+h1,h2,h3,h4{line-height:1.25; font-weight:700;}
+button{font-family:inherit;cursor:pointer;}
+.btn{
+  background:var(--bg3); color:var(--text); border:1px solid var(--line);
+  border-radius:10px; padding:12px 20px; font-size:15px; font-weight:600;
+  transition:background .15s,border-color .15s,transform .1s;
+}
+.btn:hover{background:#242e3c;border-color:#3a4657;}
+.btn:active{transform:scale(.98);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-primary{background:var(--w2);color:#04262b;border-color:var(--w2);}
+.btn-primary:hover{background:#4fd2e3;}
+.btn-danger{background:var(--err);color:#2a0009;border-color:var(--err);}
+.btn-block{display:block;width:100%;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+
+/* ---------- header / topbar ---------- */
+#topbar{
+  position:sticky;top:0;z-index:20;background:rgba(13,17,23,.92);backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);padding:10px 16px;margin-bottom:22px;
+}
+#topbar-inner{max-width:920px;margin:0 auto;display:flex;align-items:center;gap:14px;}
+#topbar .brand{font-weight:800;font-size:15px;white-space:nowrap;cursor:pointer;}
+#topbar .brand span{color:var(--w1);}
+#xpwrap{flex:1;display:flex;align-items:center;gap:8px;min-width:0;}
+#xpbar-track{flex:1;height:10px;border-radius:6px;background:var(--bg3);overflow:hidden;border:1px solid var(--line);}
+#xpbar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--w1),var(--w4));width:0%;transition:width .5s ease;}
+#xplabel{font-size:12px;color:var(--text-dim);white-space:nowrap;font-variant-numeric:tabular-nums;}
+#backbtn{font-size:13px;padding:8px 12px;}
+
+/* ---------- map ---------- */
+.hero{margin:8px 0 28px;}
+.hero h1{font-size:1.5rem;margin:0 0 6px;}
+.hero p{color:var(--text-dim);margin:0;font-size:.95rem;}
+.world{margin-bottom:30px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--bg2);}
+.world-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;flex-wrap:wrap;}
+.world-head h2{margin:0;font-size:1.05rem;display:flex;align-items:center;gap:10px;}
+.world-dot{width:12px;height:12px;border-radius:50%;flex:none;}
+.world-progress{font-size:12px;color:var(--text-dim);min-width:120px;}
+.world-bar-track{height:6px;border-radius:4px;background:var(--bg3);margin-top:4px;overflow:hidden;}
+.world-bar-fill{height:100%;border-radius:4px;}
+.level-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;padding:0 16px 16px;}
+.level-card{
+  border:1px solid var(--line);border-radius:10px;padding:13px 14px;background:var(--bg3);
+  display:flex;flex-direction:column;gap:6px;text-align:left;color:var(--text);
+  min-height:96px;position:relative;
+}
+.level-card.available{cursor:pointer;}
+.level-card.available:hover{border-color:var(--accent,var(--w2));background:#212b38;}
+.level-card.completed{cursor:pointer;}
+.level-card.locked{opacity:.5;cursor:not-allowed;}
+.level-card .lv-top{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.level-card .lv-num{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;font-weight:700;}
+.level-card .lv-title{font-size:14px;font-weight:600;}
+.level-card .lv-status{font-size:12px;color:var(--text-dim);margin-top:auto;}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700;}
+.badge-ok{background:rgba(79,206,122,.15);color:var(--ok);}
+.badge-lock{background:rgba(255,255,255,.06);color:var(--text-faint);}
+.boss-card{
+  margin:20px 16px 22px;padding:20px;border-radius:var(--radius);border:1px solid #4a2740;
+  background:linear-gradient(135deg,#2a1420,#1c1024);text-align:center;
+}
+.boss-card h2{margin:0 0 6px;font-size:1.2rem;}
+.boss-card p{color:var(--text-dim);margin:0 0 14px;font-size:.9rem;}
+.reset-row{text-align:center;margin-top:8px;}
+.reset-row button{font-size:12px;color:var(--text-faint);background:none;border:none;text-decoration:underline;padding:6px;}
+
+/* ---------- level view ---------- */
+.level-header{margin:6px 0 20px;}
+.level-header .eyebrow{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);}
+.level-header h1{font-size:1.4rem;margin:6px 0 0;}
+.stage-tabs{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap;}
+.stage-tab{
+  flex:1;min-width:80px;text-align:center;padding:8px 6px;border-radius:8px;font-size:12px;font-weight:700;
+  background:var(--bg3);color:var(--text-faint);border:1px solid var(--line);
+}
+.stage-tab.active{color:#fff;background:var(--accent);border-color:var(--accent);}
+.stage-tab.done{color:var(--accent);border-color:var(--accent);}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:16px;}
+.card h2{margin-top:0;font-size:1.1rem;}
+.card h3{font-size:1rem;margin:20px 0 8px;color:var(--accent);}
+.card p{margin:0 0 12px;}
+.analogy-box{
+  border-left:3px solid var(--accent);background:rgba(255,255,255,.03);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;
+}
+pre{
+  background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;
+  font-family:var(--mono);font-size:13px;line-height:1.5;margin:12px 0;
+}
+code{font-family:var(--mono);}
+:not(pre)>code{background:var(--code-bg);padding:1px 6px;border-radius:4px;font-size:.9em;border:1px solid var(--line);}
+.tbl-wrap{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:8px;}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:280px;}
+table caption{caption-side:top;text-align:left;padding:8px 10px;font-weight:700;color:var(--accent);background:var(--bg3);font-size:12.5px;}
+th,td{border-bottom:1px solid var(--line);padding:7px 12px;text-align:center;white-space:nowrap;}
+th{background:var(--bg3);color:var(--text-dim);font-weight:700;}
+tr:last-child td{border-bottom:none;}
+ol,ul{padding-left:22px;}
+li{margin-bottom:6px;}
+
+/* ---------- quiz ---------- */
+.quiz-progress{font-size:12px;color:var(--text-dim);margin-bottom:10px;font-weight:700;}
+.quiz-q{font-size:1.05rem;font-weight:600;margin-bottom:18px;}
+.opt{
+  display:block;width:100%;text-align:left;padding:13px 16px;margin-bottom:9px;border-radius:10px;
+  border:1px solid var(--line);background:var(--bg3);color:var(--text);font-size:14.5px;
+}
+.opt:hover{border-color:var(--accent);}
+.opt.selected{border-color:var(--accent);background:rgba(255,255,255,.05);box-shadow:0 0 0 1px var(--accent) inset;}
+.opt b{color:var(--accent);margin-right:8px;}
+
+.result-summary{text-align:center;padding:10px 0 20px;}
+.result-summary .score{font-size:2.6rem;font-weight:800;}
+.result-summary .verdict{font-size:1.05rem;font-weight:700;margin-top:4px;}
+.verdict.pass{color:var(--ok);}
+.verdict.fail{color:var(--err);}
+.review-item{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--bg3);}
+.review-item .rq{font-weight:600;margin-bottom:8px;}
+.review-item .ra{font-size:13.5px;margin:3px 0;}
+.review-item .wrong{color:var(--err);}
+.review-item .right{color:var(--ok);}
+.review-item .why{color:var(--text-dim);font-size:13px;margin-top:6px;font-style:italic;}
+
+textarea{
+  width:100%;min-height:150px;background:var(--bg3);border:1px solid var(--line);border-radius:10px;
+  color:var(--text);padding:14px;font-family:inherit;font-size:14.5px;resize:vertical;
+}
+textarea:focus{outline:none;border-color:var(--accent);}
+.feedback-box{border-radius:10px;padding:14px 16px;margin-top:14px;font-size:14px;}
+.feedback-box.bad{background:rgba(229,99,122,.1);border:1px solid var(--err);color:#ffb3c0;}
+.feedback-box.good{background:rgba(79,206,122,.1);border:1px solid var(--ok);color:#b7f0c8;}
+.model-answer{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-top:12px;font-size:13.5px;color:var(--text-dim);}
+
+.xp-toast{
+  position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;
+  background:var(--bg3);border:1px solid var(--w1);color:var(--w1);padding:12px 22px;border-radius:30px;
+  font-weight:700;font-size:14px;transition:opacity .3s,transform .3s;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+.xp-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.diag-world{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--bg3);}
+.diag-world .dw-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;}
+.diag-world .dw-revise{font-size:12.5px;color:var(--warn);margin-top:6px;}
+
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;}
+.modal{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:24px;max-width:400px;width:100%;}
+.modal h3{margin-top:0;}
+.modal .btn-row{margin-top:20px;}
+
+.locked-note{display:flex;align-items:center;gap:6px;color:var(--text-faint);font-size:13px;}
+
+@media (max-width:560px){
+  .hero h1{font-size:1.25rem;}
+  .card{padding:16px;}
+  th,td{padding:6px 8px;font-size:12px;}
+  .result-summary .score{font-size:2.1rem;}
+}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div id="topbar-inner">
+    <div class="brand" onclick="goMap()">Algoritmo<span>&amp;</span>Lógica <span>·</span> Treino</div>
+    <div id="xpwrap">
+      <div id="xpbar-track"><div id="xpbar-fill"></div></div>
+      <div id="xplabel">0 XP</div>
+    </div>
+    <button id="backbtn" class="btn" onclick="goMap()" style="display:none;">← Mapa</button>
+  </div>
+</div>
+<div id="app"></div>
+<div id="xptoast" class="xp-toast"></div>
+
+<script>
+/* =========================================================================
+   ALGORITMO E LÓGICA DE PROGRAMAÇÃO — TREINAMENTO GAMIFICADO
+   Fonte única: apostila "Algoritmo e Lógica de Programação"
+   Prof. Me. Cleber Jose Semensate Santos, EduFatecie, 2024.
+   ========================================================================= */
+
+const STORAGE_KEY = 'helpdebs_algoritmos_v1';
+
+const WORLDS = [
+  {id:'w1', name:'Mundo 1 · Fundamentos da Lógica', color:'#f2a63c', bg:'#3a2c14'},
+  {id:'w2', name:'Mundo 2 · Dados e Variáveis',       color:'#31c3d6', bg:'#123338'},
+  {id:'w3', name:'Mundo 3 · Decisão',                 color:'#a97bf0', bg:'#2a2140'},
+  {id:'w4', name:'Mundo 4 · Repetição',               color:'#4fce7a', bg:'#153524'},
+];
+
+/* LEVELS and BOSS content follow below. Kept as literal arrays for readability. */
+const LEVELS = [
+
+/* =====================================================================
+   NÍVEL 1 — Lógica, Premissas e os Métodos de Raciocínio
+   Unidade 1, Tópicos 1 e 2
+   ===================================================================== */
+{
+id:'l1', world:'w1', title:'Lógica, Premissas e os Métodos de Raciocínio', subtitle:'Unidade 1 · Tópicos 1 e 2',
+didactic: `
+<p>Pensa em como você resolve um mistério do dia a dia: "por que a planta murchou?". Você junta pistas (não reguei há 3 dias, o sol bateu forte, a terra está seca) e chega a uma conclusão. Isso é <strong>raciocínio</strong>: a capacidade de ligar causas a efeitos a partir do que você observa.</p>
+<div class="analogy-box"><strong>Premissas são pistas.</strong> Se eu te digo "Maria é filha de Pedro" e "Beto é filho de Pedro", mesmo sem te dizer diretamente, você já sabe que Maria e Beto são irmãos. Você juntou duas pistas (premissas) e tirou uma conclusão nova — isso é lógica em ação, formalizada pela primeira vez por Aristóteles na Grécia Antiga.</p></div>
+<p>Existem dois "estilos de detetive" para chegar a conclusões:</p>
+<ul>
+<li><strong>Método indutivo</strong> — você repara em um padrão que se repete ("todo dia o sol nasce entre 6h e 6h15") e assume que ele vai continuar. É rápido, mas arriscado: você pode ter visto só uma parte da história. Um clássico é achar que "todo cisne é branco" — até você viajar para a Nova Zelândia e encontrar um cisne preto. A generalização quebrou.</li>
+<li><strong>Método dedutivo</strong> — você só aceita a conclusão se ela vier de fatos 100% comprovados, encadeados em causa e efeito, como um teste de DNA que prova (ou não) uma paternidade. É mais lento de montar, mas muito mais seguro: se as premissas são verdadeiras, a conclusão é garantida.</li>
+</ul>
+<p>Resolver qualquer problema — inclusive escrever um programa depois — passa por um roteiro parecido: entender bem o que se pede, listar tudo que você sabe sobre o problema, colocar essas informações em ordem de causa e efeito, avaliar, e só então concluir.</p>
+`,
+technical: `
+<p>De acordo com Cormen <em>et al.</em> (2012) e com a linha de raciocínio apresentada na apostila, o <strong>raciocínio</strong> é a capacidade do ser humano de estabelecer relações de causa e efeito a partir de fatos observados. Na Grécia Antiga (322 a.C.), Aristóteles formalizou esse uso da razão (<em>logus</em>), dando origem à <strong>lógica</strong>, um ramo da Filosofia. Na lógica de Aristóteles, o raciocínio é representado por declarações chamadas <strong>premissas</strong>, que descrevem fatos ou conhecimentos de senso comum.</p>
+<h3>Exemplo de premissas (Maria, Beto e Pedro)</h3>
+<ol>
+<li>Duas pessoas são irmãs entre si quando ambas possuem ao menos um mesmo pai ou mãe.</li>
+<li>Maria é filha de Pedro.</li>
+<li>Beto é filho de Pedro.</li>
+</ol>
+<p>Conclusão: <strong>Beto é irmão de Maria ou Maria é irmã de Beto.</strong></p>
+<p>A lógica também é usada em demonstrações matemáticas, de forma totalmente simbólica:</p>
+<pre>X = A
+Y = A
+Logo, X = Y.</pre>
+<p>Essa é a representação formal da premissa "se duas grandezas são iguais a uma terceira, então são iguais entre si".</p>
+<h3>Os 5 passos da análise descritiva de um problema (Russell e Norvig, 2013)</h3>
+<ol>
+<li><strong>Enunciar o problema</strong> — descrever claramente o objetivo, sem palavras vagas.</li>
+<li><strong>Descrever todas as partes constituintes do problema</strong> — levantar as premissas: fatos do enunciado, conhecimentos de senso comum, conhecimentos técnicos, relações de causa e efeito, sujeitos e objetos envolvidos.</li>
+<li><strong>Ordenação lógica das premissas</strong> — premissas-causa vêm antes de premissas-efeito; um efeito pode ser causa de outro fato (efeito cascata).</li>
+<li><strong>Avaliação conclusiva</strong> — aplicar o método dedutivo ou indutivo para obter a solução.</li>
+<li><strong>Conclusão</strong> — formalizar a conclusão; se nenhuma conclusão foi obtida, retorna-se ao 2º passo para verificar premissas faltantes.</li>
+</ol>
+<h3>Método Indutivo</h3>
+<p>Segundo Law (2008), no método indutivo as premissas conduzem a uma "lei de formação" pela repetição de um <strong>padrão de comportamento</strong>. Exemplo: observando o sol nascer por 30 dias sempre entre 6h e 6h15, conclui-se (por indução) que ele nasce nesse intervalo. É empregado com reserva no meio científico porque a conclusão é uma <strong>generalização</strong>, que pode levar a inverdades: observar 5.000 cisnes brancos e concluir "todo cisne é branco" falha ao encontrar um cisne preto na Nova Zelândia.</p>
+<h3>Método Dedutivo</h3>
+<p>No método dedutivo, as premissas são avaliadas e ordenadas em uma <strong>sequência de causa e efeito</strong>, de modo que a conclusão emerge como fato novo deduzido das premissas. Exemplo (as 9 premissas do DNA de Maria e João): a partir de fatos sobre DNA, descendência e o resultado de um teste de DNA de Maria sem componentes de João, conclui-se: <strong>"João não é pai de Maria ou Maria não é filha de João"</strong>. O método dedutivo exige mais premissas, todas válidas, e é o método dos cientistas — não admite generalizações.</p>
+`,
+quiz:[
+ {statement:'Considere as premissas: (a) duas pessoas são irmãs quando têm ao menos um mesmo pai ou mãe; (b) Maria é filha de Pedro; (c) Beto é filho de Pedro. Qual conclusão a apostila tira desse conjunto?',
+  options:['Beto é irmão de Maria ou Maria é irmã de Beto.','Pedro é irmão de Maria.','Maria é mãe de Beto.','Não é possível concluir nada sem saber a idade dos dois.'],
+  correct:0, justification:'A apostila conclui exatamente isso a partir das três premissas sobre parentesco comum via Pedro.'},
+ {statement:'No exemplo das 9 premissas sobre o DNA de Maria e João, qual método de raciocínio foi utilizado para concluir que "João não é pai de Maria"?',
+  options:['Indutivo, pois a conclusão vem da observação repetida de exames.','Dedutivo, pois a conclusão decorre de uma sequência de fatos comprovadamente verdadeiros.','Nenhum dos dois, pois testes de DNA não seguem lógica formal.','Indutivo, pois generaliza o resultado de um teste para todos os casos.'],
+  correct:1, justification:'O método dedutivo organiza premissas verdadeiras em sequência de causa e efeito; não é generalização a partir de repetição, por isso não é indutivo.'},
+ {statement:'Por que a apostila trata o método indutivo "com muita reserva" no meio científico?',
+  options:['Porque ele nunca produz conclusões corretas.','Porque suas conclusões são generalizações que podem levar a inverdades, como no exemplo dos cisnes brancos.','Porque ele exige premissas verdadeiras demais para ser prático.','Porque ele só pode ser aplicado a problemas matemáticos.'],
+  correct:1, justification:'O risco do indutivo é generalizar um padrão observado (todos os cisnes vistos eram brancos) e errar ao encontrar um caso fora do padrão (cisne preto).'},
+ {statement:'Segundo os 5 passos da análise descritiva de um problema, o que caracteriza o 3º passo?',
+  options:['Enunciar claramente o problema.','Ordenação lógica das premissas, colocando causas antes de efeitos.','Avaliar a sequência aplicando o método dedutivo ou indutivo.','Formalizar a conclusão obtida.'],
+  correct:1, justification:'O 3º passo é a ordenação lógica das premissas segundo a regra causa→efeito; os passos 4 e 5 são avaliação conclusiva e conclusão, respectivamente.'},
+ {statement:'Como a apostila define "raciocínio"?',
+  options:['A capacidade de memorizar grandes quantidades de fatos.','A capacidade do ser humano de estabelecer relações de causa e efeito a partir de fatos observados.','A capacidade de um computador de tomar decisões sem supervisão humana.','A capacidade de repetir um procedimento sem entender seu propósito.'],
+  correct:1, justification:'A apostila descreve o raciocínio como o uso da razão para estabelecer relações de causa e efeito a partir de fatos observados — não é memorização nem capacidade da máquina.'},
+ {statement:'Segundo a apostila, quem formalizou o estudo do raciocínio (logus), dando origem à lógica como área da Filosofia, e em que época aproximada?',
+  options:['Guido van Rossum, no século XX.','Aristóteles, na Grécia Antiga, por volta de 322 a.C.','Descartes, na França, no século XVII.','Cormen, no século XXI, ao definir algoritmos.'],
+  correct:1, justification:'A apostila atribui a formalização do raciocínio (logus/lógica) a Aristóteles, na Grécia Antiga, em torno de 322 a.C.'},
+ {statement:'Na representação simbólica "X = A; Y = A; logo, X = Y", qual premissa geral do texto ela demonstra formalmente?',
+  options:['Se duas grandezas são iguais a uma terceira, então são iguais entre si.','Toda variável em Python deve iniciar com uma letra.','Se A é falso, então X é automaticamente verdadeiro.','A ordem das premissas nunca importa para a conclusão.'],
+  correct:0, justification:'A apostila apresenta esse exemplo simbólico como a representação matemática formal da premissa sobre igualdade transitiva entre grandezas.'},
+],
+discursive:{
+  question:'Explique a diferença entre o método indutivo e o método dedutivo, citando o que caracteriza cada um.',
+  threshold:3,
+  groups:[
+    {label:'Método indutivo', synonyms:['indutivo','inducao']},
+    {label:'Padrão / generalização', synonyms:['padrao','generalizacao','repeticao','repete']},
+    {label:'Método dedutivo', synonyms:['dedutivo','deducao']},
+    {label:'Fatos comprovados / causa e efeito', synonyms:['causa e efeito','comprovado','comprovav','premissas verdadeiras','premissas validas','fatos verdadeiros']},
+  ],
+  model:'No método indutivo, as premissas conduzem a uma lei de formação pela repetição de um padrão de comportamento — mas por ser uma generalização, pode levar a conclusões erradas (ex.: nem todo cisne é branco). No método dedutivo, as premissas são organizadas em uma sequência de causa e efeito, todas comprovadamente verdadeiras, de modo que a conclusão é obtida com certeza a partir dos fatos (ex.: o teste de DNA).'
+}
+},
+
+/* =====================================================================
+   NÍVEL 2 — Operadores Lógicos e Tabelas Verdade
+   Unidade 1, Tópico 3
+   ===================================================================== */
+{
+id:'l2', world:'w1', title:'Operadores Lógicos e Tabelas Verdade', subtitle:'Unidade 1 · Tópico 3',
+didactic:`
+<p>Pensa em quatro formas simples de conectar ideias que você já usa sem perceber:</p>
+<div class="analogy-box">
+<p><strong>Implicação (se... então):</strong> "se chove, a calçada molha". A chuva é a causa; a calçada molhada é o efeito. Essa promessa só é <em>quebrada</em> (falsa) em uma única situação: choveu e a calçada continuou seca. Em qualquer outro cenário, a implicação continua de pé.</p>
+<p><strong>OU:</strong> pense no cardápio "sobremesa ou fruta" de um bufê generoso — você pode pegar só sobremesa, só fruta, ou as duas! O OU da lógica é assim: inclusivo. Só falha quando você não pega nenhuma das duas.</p>
+<p><strong>E:</strong> uma autorização bancária que precisa das assinaturas do presidente <em>e</em> do tesoureiro. Falta uma assinatura, o pagamento não sai. Só funciona com as duas presentes.</p>
+<p><strong>Negação:</strong> vivo/morto, ligado/desligado — inverte o estado. E negar duas vezes volta ao estado original: "não estar não-vivo" é o mesmo que estar vivo.</p>
+</div>
+<p>Essas quatro peças (implicação, OU, E, negação) são o alfabeto que te permite montar qualquer premissa mais complexa.</p>
+`,
+technical:`
+<h3>Operador de Implicação (A→B)</h3>
+<p>Constitui a operação lógica CAUSA→EFEITO: quando A acontece (causa), B necessariamente acontece (efeito). Exemplo: (CHUVA)→(CALÇADA MOLHADA).</p>
+<div class="tbl-wrap"><table><caption>QUADRO 1 – Tabela verdade do operador Implicação</caption>
+<tr><th>A</th><th>B</th><th>A → B</th></tr>
+<tr><td>F</td><td>F</td><td>V</td></tr>
+<tr><td>F</td><td>V</td><td>V</td></tr>
+<tr><td>V</td><td>F</td><td>F</td></tr>
+<tr><td>V</td><td>V</td><td>V</td></tr>
+</table></div>
+<p>O operador A→B <strong>somente é falso quando A é verdadeiro e B é falso.</strong></p>
+<h3>Operador OU (A + B)</h3>
+<p>Relaciona dois fatos que podem ocorrer conjuntamente ou de forma alternada. Exemplo: (COR DE BOVINOS): (BRANCA + PRETA) — pode ser extendido a mais elementos: (BRANCA + PRETA + MARROM).</p>
+<div class="tbl-wrap"><table><caption>QUADRO 2 – Tabela verdade do operador OU</caption>
+<tr><th>A</th><th>B</th><th>A + B</th></tr>
+<tr><td>F</td><td>F</td><td>F</td></tr>
+<tr><td>F</td><td>V</td><td>V</td></tr>
+<tr><td>V</td><td>F</td><td>V</td></tr>
+<tr><td>V</td><td>V</td><td>V</td></tr>
+</table></div>
+<p>O operador A + B <strong>somente é falso quando A é falso e B é falso.</strong></p>
+<h3>Operador E (A.B)</h3>
+<p>Relaciona dois fatos que só ocorrem juntos. Exemplo: (AUTORIZAR PAGAMENTO): (ASSINATURA PRESIDENTE . TESOUREIRO) — extensível: (...TESOUREIRO . VICE-PRESIDENTE).</p>
+<div class="tbl-wrap"><table><caption>QUADRO 3 – Tabela do operador E</caption>
+<tr><th>A</th><th>B</th><th>A.B</th></tr>
+<tr><td>F</td><td>F</td><td>F</td></tr>
+<tr><td>F</td><td>V</td><td>F</td></tr>
+<tr><td>V</td><td>F</td><td>F</td></tr>
+<tr><td>V</td><td>V</td><td>V</td></tr>
+</table></div>
+<p>O operador A.B <strong>somente é verdadeiro quando A é verdadeiro e B é verdadeiro.</strong></p>
+<h3>Operador de Negação (~A)</h3>
+<p>Inverte o estado lógico: (MORTE): (~VIDA). A negação da negação retorna ao estado original: (VIDA): ~(~VIDA).</p>
+<div class="tbl-wrap"><table><caption>QUADRO 4 – Tabela verdade do operador Negação</caption>
+<tr><th>A</th><th>~A</th></tr>
+<tr><td>F</td><td>V</td></tr>
+<tr><td>V</td><td>F</td></tr>
+</table></div>
+`,
+quiz:[
+ {statement:'Considere A = Verdadeiro e B = Falso. Qual o resultado de A → B?',
+  options:['Verdadeiro','Falso','Indefinido, faltam dados','Depende do contexto da frase'],
+  correct:1, justification:'A implicação A→B só é falsa quando A é verdadeiro e B é falso — exatamente este caso.'},
+ {statement:'Considere A = Verdadeiro e B = Falso. Qual o resultado de A + B (operador OU)?',
+  options:['Falso, pois B é falso','Verdadeiro, pois basta um dos dois ser verdadeiro','Falso, pois não há acordo entre A e B','Verdadeiro somente se os dois forem verdadeiros'],
+  correct:1, justification:'O operador OU só é falso quando ambos são falsos; com A verdadeiro, o resultado já é verdadeiro.'},
+ {statement:'Considere A = Falso e B = Falso. Qual o resultado de A.B (operador E)?',
+  options:['Verdadeiro, pois os dois estão de acordo','Falso, pois o operador E exige que ambos sejam verdadeiros','Verdadeiro, pois nenhum dos dois nega o outro','Indefinido, pois faltam informações'],
+  correct:1, justification:'O operador E só é verdadeiro quando A e B são ambos verdadeiros; aqui os dois são falsos.'},
+ {statement:'De acordo com a apostila, o que significa ~(~A)?',
+  options:['Sempre falso, independentemente de A','O mesmo que A (a negação da negação retorna ao estado original)','O mesmo que A + A','Uma expressão sem sentido lógico'],
+  correct:1, justification:'A apostila mostra que negar duas vezes retorna ao valor original: (A): ~(~A).'},
+ {statement:'Em qual situação exatamente o operador A → B é falso, segundo a tabela verdade da apostila?',
+  options:['Quando A é falso e B é verdadeiro','Quando A é verdadeiro e B é falso','Quando A e B são ambos falsos','Quando A e B são ambos verdadeiros'],
+  correct:1, justification:'A apostila afirma textualmente: "o operador A→B somente é falso quando A é verdadeiro e B é falso".'},
+],
+discursive:{
+  question:'Explique o que significa o operador de implicação (A→B) e em que situação ele é falso, segundo a apostila.',
+  threshold:3,
+  groups:[
+    {label:'Relação de causa e efeito', synonyms:['causa e efeito','causa->efeito','quando a acontece b acontece','se a entao b','se acontece']},
+    {label:'Só é falso quando A é verdadeiro e B é falso', synonyms:['a verdadeiro e b falso','a verdadeira e b falsa','somente falso quando a e verdadeiro','a e falso','v e f']},
+    {label:'Exemplo chuva/calçada', synonyms:['chuva','calcada','molhada']},
+    {label:'Nos demais casos é verdadeiro', synonyms:['demais casos e verdadeiro','caso contrario e verdadeiro','restante e verdadeiro']},
+  ],
+  model:'O operador de implicação (A→B) representa uma relação de causa e efeito: quando A acontece (causa), B necessariamente acontece (efeito), como em "se chove, a calçada molha". Segundo a tabela verdade da apostila, A→B só é falso quando A é verdadeiro e B é falso (a causa ocorreu, mas o efeito não); em todos os outros três casos o resultado é verdadeiro.'
+}
+},
+
+/* =====================================================================
+   NÍVEL 3 — Algoritmos e a Estratégia de Desenvolvimento
+   Unidade 1, Tópico 4
+   ===================================================================== */
+{
+id:'l3', world:'w1', title:'Algoritmos e a Estratégia de Desenvolvimento', subtitle:'Unidade 1 · Tópico 4',
+didactic:`
+<p>Imagina uma receita de bolo. Ela não pensa — quem pensou foi quem escreveu a receita. O forno só obedece ao que está escrito. Computadores são exatamente assim: <strong>não pensam</strong>. Quem detém a razão é o programador, que precisa deixar tudo explícito, sem "deduzir sozinho" nada.</p>
+<div class="analogy-box"><strong>Algoritmo é a receita escrita</strong> — uma sequência de passos clara, ordenada e finita para chegar a um resultado. E antes de servir aos convidados, você prova a receita: isso é o <strong>teste de mesa</strong>, simular cada passo manualmente para garantir que o resultado final é o esperado antes de "publicar" o algoritmo.</p></div>
+<p>Se ao provar a receita algo deu errado, você não joga tudo fora — volta e revê a lista de ingredientes e passos (2º passo da criação), ajusta a ordem se precisar, e testa de novo.</p>
+`,
+technical:`
+<p>Computadores são máquinas: não têm capacidade de pensar, não criam iniciativa própria. Todo computador executa uma <strong>sequência de comandos</strong> (um programa) previamente criada por um ser humano — o <strong>programador</strong>, que detém o uso da razão para elaborar essa sequência lógica.</p>
+<p>A <strong>programação de computadores</strong> é o processo de registrar na memória da máquina essa sequência de comandos, escrita em uma <strong>linguagem de programação</strong>. Não é necessário conhecer todas as linguagens existentes — é necessário saber <strong>criar um algoritmo</strong>.</p>
+<h3>4.1 Algoritmos</h3>
+<p>De acordo com Cormen <em>et al.</em> (2012), um <strong>algoritmo</strong> é uma sequência de instruções, escritas de forma <strong>clara, ordenada e finita</strong>, elaborada para realizar uma determinada tarefa ou resolver um problema.</p>
+<h3>Os 4 passos da criação de algoritmos (Cormen, 2014)</h3>
+<ol>
+<li><strong>Descrição do problema a resolver ou tarefa a ser feita</strong> — definição clara e objetiva; com frequência, o próprio título do algoritmo já basta (ex.: "Receita de pudim de leite condensado").</li>
+<li><strong>Decompor a tarefa ou o problema em todas as ações necessárias para a realização</strong> — relacionar todos os itens necessários; nenhuma ação (instrução) pode ser esquecida ou implicitamente entendida.</li>
+<li><strong>Ordenação lógica das ações</strong> — ordenar as ações de modo que, ao final, a tarefa esteja resolvida com sucesso.</li>
+<li><strong>Conclusão</strong> — avaliar a sequência de instruções testando-a passo a passo, na ordem estabelecida, verificando se a tarefa foi concluída com êxito. Esse teste é conhecido como <strong>teste de mesa</strong>.</li>
+</ol>
+<p>Caso a tarefa não tenha sido concluída com êxito no teste de mesa, <strong>retorna-se ao 2º passo</strong>, verificando a falta de alguma instrução, e seguem-se novamente o 3º e o 4º passos, sucessivamente, até que o algoritmo esteja certo. Caso a tarefa tenha sido concluída com êxito, o algoritmo está pronto.</p>
+`,
+quiz:[
+ {statement:'Segundo Cormen et al. (2012), como a apostila define um algoritmo?',
+  options:['Uma sequência de instruções aproximada e flexível, que se ajusta durante a execução.','Uma sequência de instruções escrita de forma clara, ordenada e finita, para realizar uma tarefa ou resolver um problema.','Qualquer trecho de código escrito em uma linguagem de programação compilada.','Um conjunto de regras que o computador cria sozinho a partir dos dados de entrada.'],
+  correct:1, justification:'A definição de Cormen citada na apostila exige clareza, ordenação e finitude — não é algo aproximado nem criado pela máquina.'},
+ {statement:'O que é o "teste de mesa", segundo a estratégia de criação de algoritmos apresentada na apostila?',
+  options:['A compilação do programa em um computador de mesa.','A execução passo a passo do algoritmo, manualmente, para verificar se a tarefa foi concluída com êxito.','Uma reunião entre programadores para debater o algoritmo.','Um teste automatizado feito pelo compilador da linguagem.'],
+  correct:1, justification:'O teste de mesa é o 4º passo: avaliar a sequência de instruções executando-a passo a passo e observando se a tarefa foi realmente concluída.'},
+ {statement:'Se o teste de mesa mostra que a tarefa não foi concluída com êxito, para qual passo o processo de criação do algoritmo deve retornar, segundo a apostila?',
+  options:['Para o 1º passo, recomeçando a descrição do problema do zero.','Para o 2º passo, verificando a falta de alguma instrução.','Não é preciso retornar a passo algum; o algoritmo deve ser descartado.','Para o 4º passo, repetindo o mesmo teste sem alterações.'],
+  correct:1, justification:'A apostila é explícita: "retorne ao 2º passo, verificando a falta de alguma instrução", seguindo depois os passos 3 e 4 novamente.'},
+ {statement:'Segundo a apostila, quem detém o conhecimento e o uso da razão para elaborar a sequência lógica que o computador vai executar?',
+  options:['O próprio computador, que interpreta e ajusta o algoritmo.','O compilador da linguagem de programação.','O programador, um ser humano.','O usuário final do programa, no momento da execução.'],
+  correct:2, justification:'A apostila afirma que máquinas não pensam nem criam iniciativa própria; é o programador quem detém a razão para elaborar a sequência lógica.'},
+ {statement:'Quais são os três critérios que, segundo Cormen et al. (2012), toda sequência de instruções de um algoritmo deve atender?',
+  options:['Clara, ordenada e finita.','Compilada, portável e reutilizável.','Rápida, simples e genérica.','Interativa, gráfica e documentada.'],
+  correct:0, justification:'A definição citada na apostila usa exatamente os termos "clara, ordenada e finita" para caracterizar um algoritmo.'},
+],
+discursive:{
+  question:'O que é um teste de mesa e por que ele é importante na criação de um algoritmo?',
+  threshold:3,
+  groups:[
+    {label:'Executar passo a passo manualmente', synonyms:['passo a passo','manualmente','a mao','executar cada instrucao','simular']},
+    {label:'Validação/verificação do algoritmo', synonyms:['validar','verificar','validacao','verificacao','confirmar que funciona','teste']},
+    {label:'Retorno ao 2º passo se falhar', synonyms:['retorna ao','volta ao','2 passo','segundo passo','falta alguma instrucao']},
+    {label:'É o 4º passo / a conclusão da criação', synonyms:['conclusao','4 passo','quarto passo','ultimo passo','criacao do algoritmo']},
+  ],
+  model:'O teste de mesa é o 4º passo na criação de um algoritmo: consiste em executar a sequência de instruções passo a passo, manualmente, na ordem estabelecida, para verificar se a tarefa foi realmente concluída com êxito. É importante porque valida o algoritmo antes de considerá-lo pronto; se a tarefa não for concluída com sucesso, o processo retorna ao 2º passo para verificar se alguma instrução ficou faltando.'
+}
+},
+
+/* =====================================================================
+   NÍVEL 4 — Python: Linguagem, Ambiente e o Primeiro Programa
+   Unidade 1, Tópicos 5 e 6
+   ===================================================================== */
+{
+id:'l4', world:'w1', title:'Python: Linguagem, Ambiente e o Primeiro Programa', subtitle:'Unidade 1 · Tópicos 5 e 6',
+didactic:`
+<p>O algoritmo é a ideia; o código é a tradução dessa ideia para uma língua que o computador entende — e essa tradução (codificação) nem sempre é 1 para 1: às vezes um passo do algoritmo vira várias linhas de código, às vezes várias linhas viram uma só.</p>
+<div class="analogy-box">
+<p><strong>Modo interativo do IDLE</strong> é como uma calculadora que responde na hora: você digita <code>x=10</code>, depois <code>y=12</code>, depois <code>x+y</code>, e o ambiente já devolve <code>22</code> na mesma hora.</p>
+<p><strong>Modo programado</strong> é como escrever uma carta inteira antes de enviá-la: você escreve todo o programa no editor e só quando aperta <strong>F5</strong> ("enviar a carta") é que tudo roda de uma vez.</p>
+</div>
+<p>Python foi criado por Guido van Rossum em 1991 e ficou popular porque é uma linguagem "de leitura fácil" — quase como pseudocódigo em inglês. Um jeito de lembrar as 5 vantagens dela: é <strong>clara</strong> (fácil de ler), funciona em <strong>vários estilos</strong> de programar, é <strong>interpretada</strong> (roda sem precisar "compilar" antes), é <strong>portátil</strong> (o mesmo código roda em máquinas diferentes) e serve como <strong>script</strong> (cola com outros programas do sistema).</p>
+`,
+technical:`
+<p>O processo de transformar um algoritmo em programa é a <strong>codificação</strong>. Essa relação algoritmo↔código não é direta: uma instrução do algoritmo pode virar várias instruções de código, e vice-versa.</p>
+<h3>5.1 Introdução à Linguagem Python</h3>
+<p><strong>Python</strong> foi criada em 1991 por <strong>Guido van Rossum</strong>, sendo hoje uma das linguagens mais utilizadas no mundo. Conforme Maruch e Maruch (2006), suas vantagens são:</p>
+<ul>
+<li><strong>Linguagem clara e simples</strong> — instruções próximas do algoritmo, fácil de entender mesmo sem experiência prévia.</li>
+<li><strong>Linguagem multiparadigma</strong> — aceita programação procedural e orientada a objetos.</li>
+<li><strong>Linguagem interpretada</strong> — não é compilada; roda em um ambiente instalado que interpreta o programa no momento da execução.</li>
+<li><strong>Linguagem altamente portável</strong> — o mesmo código roda em máquinas diferentes, sem alterações, uma vez que o ambiente Python esteja instalado em ambas.</li>
+<li><strong>Linguagem script</strong> — pode controlar e usar resultados de outros programas/aplicativos instalados no computador.</li>
+</ul>
+<h3>5.2 a 5.6 — O ambiente IDLE</h3>
+<p>O ambiente próprio do Python é o <strong>IDLE</strong> (<em>Integrated Development and Learning Environment</em>), com dois modos:</p>
+<p><strong>Modo interativo</strong> — comandos executados imediatamente, exibindo o resultado na hora:</p>
+<pre>&gt;&gt;&gt; x=10
+&gt;&gt;&gt; y=12
+&gt;&gt;&gt; x+y
+22</pre>
+<p><strong>Modo programado</strong> — usa o editor de texto do IDLE. O símbolo <code>#</code> marca o início de um comentário (mensagem para o programador, não processada pela máquina). A execução do código escrito no editor é feita pela tecla <strong>F5</strong>.</p>
+<h3>Regras de variáveis</h3>
+<p>Variáveis em Python iniciam sempre com uma letra, não podem ter espaços, e são <em>case sensitive</em>. Não é necessário declarar o tipo — a linguagem o define automaticamente a partir do valor atribuído.</p>
+<p><strong>Exemplos válidos:</strong></p>
+<pre>x=10
+nome="Maria"
+Area_do_quadrado= Base * Altura
+CATETO2=200.345</pre>
+<p><strong>Exemplos inválidos:</strong></p>
+<pre>20Casal=300
+Nome de Família = "Torres"</pre>
+<h3>input e print</h3>
+<pre>Nome_da_Variavel = input('Mensagem ao usuário ')
+print('Mensagem ao usuário')
+print('Mensagem sobre alguma saída de dados', Nome_da_Variavel)</pre>
+<h3>6. Criando um programa em Python — o problema da garagem</h3>
+<p><strong>Enunciado:</strong> o plano diretor de uma cidade determina o percentual máximo de área destinado para garagem em relação à área total do terreno. Um programa deve receber as medidas do terreno e da garagem e calcular o percentual de ocupação.</p>
+<p><strong>Algoritmo (8 passos):</strong></p>
+<ol>
+<li>Entrar com o valor da largura da garagem em metros;</li>
+<li>Entrar com o valor da profundidade da garagem em metros;</li>
+<li>Calcular área da garagem = largura da garagem * profundidade da garagem;</li>
+<li>Entrar com o valor da largura do terreno em metros;</li>
+<li>Entrar com o valor da profundidade do terreno em metros;</li>
+<li>Calcular área do terreno = largura do terreno * profundidade do terreno;</li>
+<li>Calcular percentual de ocupação = (área da garagem / área do terreno) * 100;</li>
+<li>Apresentar em tela o resultado.</li>
+</ol>
+<pre>Largura_Garagem=float(input("Entre com a largura da garagem em metros: "))
+Profundidade_Garagem=float(input("Entre com a profundidade da garagem em metros: "))
+
+#Abaixo, cálculo da área da garagem
+Area_Garagem=Largura_Garagem * Profundidade_Garagem
+
+Largura_Terreno=float(input("Entre com a largura do terreno em metros: "))
+Profundidade_Terreno=float(input("Entre com a profundidade do terreno em metros: "))
+
+# Abaixo, cálculo da área do terreno
+Area_Terreno=Largura_Terreno * Profundidade_Terreno
+
+# Agora, cálculo do percentual de ocupação
+Percentual = ((Area_Garagem)/(Area_Terreno))* 100
+print("Percentual de ocupação:",Percentual)</pre>
+<p>Executando com área da garagem de 30 m² (5×6) e área do terreno de 400 m² (20×20), o resultado impresso é <code>Percentual de ocupação: 7.5</code>.</p>
+`,
+quiz:[
+ {statement:'Segundo a apostila, quem criou a linguagem Python e em que ano?',
+  options:['Dennis Ritchie, em 1972.','Guido van Rossum, em 1991.','Guido van Rossum, em 2001.','Linus Torvalds, em 1991.'],
+  correct:1, justification:'A apostila afirma que Python foi criada em 1991 por Guido van Rossum.'},
+ {statement:'Qual conjunto de alternativas representa corretamente as 5 vantagens do Python listadas na apostila?',
+  options:['Clara e simples, multiparadigma, compilada, portável e script.','Clara e simples, multiparadigma, interpretada, portável e script.','Clara e simples, orientada a objetos apenas, interpretada, portável e rápida.','Simples, script, compilada, de baixo nível e portável.'],
+  correct:1, justification:'A apostila lista exatamente: linguagem clara e simples, multiparadigma, interpretada, altamente portável e linguagem script — Python NÃO é compilada.'},
+ {statement:'No modo interativo do IDLE, após digitar ">>> x=10", ">>> y=12" e ">>> x+y", o que é exibido na tela, segundo a apostila?',
+  options:['A expressão "x+y" sem calcular.','O valor 22.','Uma mensagem de erro, pois faltou usar print().','Nenhum valor, o modo interativo não calcula expressões diretamente.'],
+  correct:1, justification:'O exemplo da apostila mostra que, no modo interativo, o resultado 22 é exibido imediatamente após x+y.'},
+ {statement:'Considerando as regras de nomeação de variáveis apresentadas na apostila (inicia com letra, sem espaços, case sensitive), qual das opções a seguir é um nome de variável INVÁLIDO?',
+  options:['Area_do_quadrado','CATETO2','20Casal','nome'],
+  correct:2, justification:'"20Casal" começa com um dígito, o que é inválido segundo as regras apresentadas; os demais exemplos são válidos na apostila.'},
+ {statement:'No modo programado do IDLE, qual tecla é usada para executar o código escrito no editor, segundo a apostila?',
+  options:['Ctrl+Enter','F5','Ctrl+R','F2'],
+  correct:1, justification:'A apostila indica explicitamente a tecla F5 para rodar o programa escrito no editor do IDLE.'},
+ {statement:'O que o símbolo "#" indica no início de uma linha de código Python, segundo a apostila?',
+  options:['O início de uma função.','O início de um comentário, que não é processado pela máquina.','Uma variável do tipo texto.','O fim do programa.'],
+  correct:1, justification:'A apostila explica que "#" marca o início de um comentário, uma mensagem para o programador que não é processada pela máquina.'},
+ {statement:'No algoritmo do programa da garagem, como é calculado o percentual de ocupação?',
+  options:['(área do terreno / área da garagem) * 100','(área da garagem / área do terreno) * 100','área da garagem * área do terreno / 100','(área da garagem + área do terreno) * 100'],
+  correct:1, justification:'O 7º passo do algoritmo define: percentual de ocupação = (área da garagem / área do terreno) * 100 — inverter a divisão é um erro comum.'},
+],
+discursive:{
+  question:'Cite as vantagens do Python segundo a apostila e explique o que caracteriza o modo interativo do IDLE.',
+  threshold:3,
+  groups:[
+    {label:'Vantagens (clara/simples, multiparadigma, interpretada, portável, script)', synonyms:['clara e simples','multiparadigma','interpretada','portavel','script']},
+    {label:'Modo interativo executa na hora', synonyms:['executado imediatamente','resultado na hora','na hora','imediato','em tempo real']},
+    {label:'Ambiente IDLE', synonyms:['idle']},
+    {label:'Guido van Rossum / 1991', synonyms:['guido','van rossum','1991']},
+  ],
+  model:'Segundo a apostila, o Python tem cinco vantagens: é uma linguagem clara e simples, multiparadigma, interpretada, altamente portável e linguagem script. Foi criada em 1991 por Guido van Rossum. O ambiente próprio para desenvolvê-la é o IDLE, que no modo interativo executa cada comando imediatamente e exibe o resultado na tela assim que é digitado, ao contrário do modo programado, que só executa tudo ao pressionar F5.'
+}
+},
+
+/* =====================================================================
+   NÍVEL 5 — Como o Computador Representa Dados
+   Unidade 2, Tópico 1
+   ===================================================================== */
+{
+id:'l5', world:'w2', title:'Como o Computador Representa Dados', subtitle:'Unidade 2 · Tópico 1',
+didactic:`
+<p>Pensa no computador como uma mesa de trabalho: a <strong>CPU</strong> é a pessoa que segue ordens (soma, compara, decide), a <strong>memória</strong> é a mesa em si — rápida, mas some tudo que está sobre ela se a luz apagar (é <em>volátil</em>) — e o <strong>disco rígido</strong> é a gaveta de arquivos ao lado: mais lenta para pegar coisas, mas guarda tudo mesmo com a luz apagada.</p>
+<div class="analogy-box">O <strong>sistema binário</strong> é só um interruptor de luz: aceso ou apagado, 1 ou 0. Com vários interruptores enfileirados, dá para representar qualquer letra ou número — é assim que "A" vira uma sequência de zeros e uns guardada na memória.</div>
+<p>E cuidado com um detalhe traiçoeiro: na informática, "K" de quilo não é exatamente 1.000 como no dia a dia — é <strong>1.024</strong>, porque tudo é potência de 2 lá dentro.</p>
+`,
+technical:`
+<p>Um computador é formado por CPU, memória e dispositivos de entrada e saída (E/S), além de um disco rígido.</p>
+<ul>
+<li><strong>CPU</strong> — o "cérebro" do computador: guarda e recupera valores da memória, executa aritmética básica e lógica, controla a execução das instruções.</li>
+<li><strong>Memória</strong> — local de armazenamento relativamente rápido, dividido em endereços; é <strong>volátil</strong> (perde o conteúdo assim que o computador é desligado).</li>
+<li><strong>Disco rígido</strong> — armazenamento mais lento que a memória e a CPU, mas <strong>persistente</strong> (retém o conteúdo mesmo com a energia desligada).</li>
+<li><strong>Mouse e tela</strong> — dispositivos de entrada e saída, respectivamente.</li>
+</ul>
+<p>Segundo Edelweiss e Livi (2014, p. 21): <em>"Internamente, os computadores digitais operam usando o sistema numérico binário, que utiliza apenas os símbolos 0 e 1. [...] o componente conceitual básico e a menor unidade de armazenamento de informação é o bit. [...] um bit pode memorizar somente um entre dois valores: zero ou um."</em></p>
+<p>Para representar caracteres, usam-se códigos armazenados em conjuntos de bits (<strong>bytes</strong>, conjuntos de 8 bits):</p>
+<ul>
+<li><strong>ASCII</strong> (7 bits por caractere) — usado por grande parte dos microcomputadores; o bit mais significativo (mais à esquerda) do byte é sempre igual a 0.</li>
+<li><strong>EBCDIC</strong> (8 bits por caractere) — usa um byte inteiro para cada caractere.</li>
+<li><strong>UNICODE</strong> (16, 32 ou mais bits) — abrange mais de 100.000 caracteres, podendo usar um, dois ou mais bytes por caractere.</li>
+</ul>
+<div class="tbl-wrap"><table><caption>QUADRO 1 – Representação dos caracteres A e Z nos códigos EBCDIC e ASCII</caption>
+<tr><th>Caractere</th><th>EBCDIC</th><th>ASCII</th></tr>
+<tr><td>A</td><td>1100 0001</td><td>0100 0001</td></tr>
+<tr><td>Z</td><td>1110 1001</td><td>0101 1010</td></tr>
+</table></div>
+<div class="tbl-wrap"><table><caption>QUADRO 2 – Unidades de medida da capacidade de armazenamento</caption>
+<tr><th>Prefixo</th><th>Nome</th><th>Equivalente</th><th>Potência de 10</th></tr>
+<tr><td>K</td><td>quilo</td><td>mil</td><td>10³</td></tr>
+<tr><td>M</td><td>mega</td><td>milhão</td><td>10⁶</td></tr>
+<tr><td>G</td><td>giga</td><td>bilhão</td><td>10⁹</td></tr>
+<tr><td>T</td><td>tera</td><td>trilhão</td><td>10¹²</td></tr>
+</table></div>
+<p>Como o sistema interno é binário (base 2), as capacidades de armazenamento aparecem como potências de 2:</p>
+<div class="tbl-wrap"><table><caption>QUADRO 3 – Capacidades de armazenamento em potências de 2</caption>
+<tr><th>Prefixo</th><th>Valor</th><th>Potência de 2</th></tr>
+<tr><td>K</td><td>1.024</td><td>2¹⁰</td></tr>
+<tr><td>M</td><td>1.048.576</td><td>2²⁰</td></tr>
+</table></div>
+`,
+quiz:[
+ {statement:'Qual componente do computador é rápido, porém volátil (perde seu conteúdo assim que a máquina é desligada), segundo a apostila?',
+  options:['O disco rígido','A memória','O mouse','A tela'],
+  correct:1, justification:'A apostila descreve a memória como um dispositivo relativamente rápido, mas que perde o conteúdo ao desligar o computador — diferente do disco rígido, que é mais lento porém persistente.'},
+ {statement:'Segundo a apostila, quantos bits o código ASCII usa por caractere, e qual é sempre o valor do bit mais significativo?',
+  options:['8 bits; o bit mais significativo é sempre 1.','7 bits; o bit mais significativo é sempre 0.','16 bits; o bit mais significativo pode variar.','7 bits; o bit mais significativo é sempre 1.'],
+  correct:1, justification:'A apostila afirma que o ASCII usa 7 bits por caractere e que o bit mais significativo (mais à esquerda) do byte é sempre igual a 0.'},
+ {statement:'Na informática, segundo o quadro de potências de 2 apresentado na apostila, quanto vale 1K (quilo) de armazenamento?',
+  options:['1.000, exatamente como no sistema métrico decimal.','1.024, pois corresponde a 2 elevado a 10.','1.048.576, pois corresponde a 2 elevado a 20.','100, pois é uma unidade menor que o byte.'],
+  correct:1, justification:'Apesar de "quilo" significar mil no sistema métrico, no sistema binário 1K = 1.024 = 2¹⁰, conforme o Quadro 3 da apostila.'},
+ {statement:'De acordo com o Quadro 1 da apostila, qual é a representação do caractere "A" no código ASCII?',
+  options:['1100 0001','0100 0001','0101 1010','1110 1001'],
+  correct:1, justification:'O Quadro 1 mostra que "A" em ASCII é 0100 0001; 1100 0001 é a representação de "A" em EBCDIC, não em ASCII.'},
+ {statement:'Aproximadamente quantos caracteres o código UNICODE abrange, segundo a apostila?',
+  options:['Cerca de 256 caracteres.','Cerca de 128 caracteres.','Mais de 100.000 caracteres.','Exatamente 65.536 caracteres.'],
+  correct:2, justification:'A apostila afirma que o UNICODE abrange mais de 100.000 caracteres, usando um, dois ou mais bytes por caractere.'},
+],
+discursive:{
+  question:'Explique a diferença entre memória e disco rígido, e o que é o sistema binário.',
+  threshold:3,
+  groups:[
+    {label:'Memória é volátil e rápida', synonyms:['volatil','rapida','perde o conteudo','perde ao desligar','perde tudo']},
+    {label:'Disco rígido é lento e persistente', synonyms:['lento','persistente','mantem mesmo desligado','retem conteudo','guarda mesmo desligado']},
+    {label:'Sistema binário usa 0 e 1', synonyms:['binario','0 e 1','zero e um','base 2']},
+    {label:'Bit é a menor unidade de informação', synonyms:['menor unidade','binary digit','digito binario','bit']},
+  ],
+  model:'A memória é um dispositivo de armazenamento rápido, porém volátil: perde seu conteúdo assim que o computador é desligado. Já o disco rígido é mais lento, mas persistente, retendo o conteúdo mesmo sem energia. O sistema binário é o sistema numérico usado internamente pelos computadores digitais, que utiliza apenas os símbolos 0 e 1; a menor unidade de armazenamento de informação nesse sistema é o bit (binary digit), que memoriza somente um entre dois valores: zero ou um.'
+}
+},
+
+/* =====================================================================
+   NÍVEL 6 — Constantes, Variáveis e a Atribuição por Dentro
+   Unidade 2, Tópicos 2, 3 e 4
+   ===================================================================== */
+{
+id:'l6', world:'w2', title:'Constantes, Variáveis e a Atribuição por Dentro', subtitle:'Unidade 2 · Tópicos 2, 3 e 4',
+didactic:`
+<div class="analogy-box"><strong>Variável = envelope.</strong> Você põe R$30 dentro, depois alguém soma mais R$50: o envelope continua com o mesmo nome, mas o conteúdo mudou para R$80. O nome do envelope (a variável) não muda; o que está dentro dele, sim.</div>
+<p>Agora um ponto que engana muita gente: quando você faz <code>b = a</code>, você <strong>não está amarrando</strong> b e a com um barbante que os faz mudar juntos para sempre. Você está apenas tirando uma cópia do "bilhete" que diz onde está o valor <em>naquele momento</em>. Se depois você mudar <code>a</code>, o <code>b</code> continua apontando pro valor antigo — porque cada variável é independente.</p>
+<p>E o sinal <code>=</code> em programação <strong>não é "igual a"</strong> como na matemática — é uma seta de atribuição: "guarde o que está à direita dentro do que está à esquerda".</p>
+`,
+technical:`
+<h3>2.1 Constantes</h3>
+<p>As <strong>constantes</strong> representam dados cujo valor permanece inalterado durante a execução do programa. No Python, costumam ser declaradas em MAIÚSCULAS com palavras separadas por sublinhado, dentro de um módulo.</p>
+<pre>PI = 3.1415
+DolarTurismo = 4.04</pre>
+<h3>2.2 Variáveis e seus Tipos</h3>
+<p>Conforme Kalb (2016), uma <strong>variável</strong> é uma localização de memória nomeada que possui um determinado valor, que pode variar com o tempo. A atribuição segue a forma geral <code>&lt;variável&gt; = &lt;expressão&gt;</code>.</p>
+<h3>Regras de nomeação de variáveis (Kalb, 2016)</h3>
+<ul>
+<li>Começar com uma letra ou sublinhado;</li>
+<li>Não começar com um dígito;</li>
+<li>Ter no máximo 256 caracteres;</li>
+<li>Letras, dígitos, sublinhados e cifrões podem ser inseridos;</li>
+<li>Não conter espaços nem símbolos matemáticos (+, -, /, *, parênteses).</li>
+</ul>
+<p>Duas convenções de escrita: <strong>camelCase</strong> (ex.: <code>essaVariavelNome</code>) e <strong>snake_case</strong>, com sublinhado entre palavras (ex.: <code>essa_variavel_nome</code>).</p>
+<h3>3. O sinal "=" é atribuição, não igualdade</h3>
+<p>Segundo Melo (2019), a operação de atribuição ocorre em três passos:</p>
+<ol>
+<li>Gera-se na memória o <strong>objeto</strong> resultante do lado direito da atribuição;</li>
+<li>Se a variável do lado esquerdo não existir no escopo atual, ela é <strong>criada</strong>;</li>
+<li>A variável passa a <strong>apontar</strong> para o objeto gerado no 1º passo.</li>
+</ol>
+<h3>A sequência a=1 → b=a → a=2 → c=b+6</h3>
+<pre>&gt;&gt;&gt; a = 1      # a aponta para o objeto 1
+&gt;&gt;&gt; b = a      # b aponta para o MESMO objeto que a aponta (1); b e a são independentes
+&gt;&gt;&gt; a = 2      # a passa a apontar para um NOVO objeto (2); b continua apontando para 1
+&gt;&gt;&gt; c = b + 6  # c aponta para o resultado de b+6 = 1+6 = 7</pre>
+<p>Como b e c são variáveis independentes, "qualquer mudança no objeto apontado por b não vai interferir em c" — cada variável só sabe para qual objeto aponta <em>no momento</em> em que foi atribuída, e não se atualiza automaticamente quando outra variável muda.</p>
+<h3>4. Os 8 tipos imutáveis</h3>
+<p>No Python, esses objetos não podem ser modificados após criados — apenas a variável pode passar a apontar para um novo objeto. Segundo a apostila, os tipos básicos imutáveis são:</p>
+<ul>
+<li><strong>bool</strong> — só assume <code>True</code> ou <code>False</code>; o Python associa 1 a True e 0 a False.</li>
+<li><strong>int</strong> — precisão arbitrária, com quantidade arbitrária de dígitos.</li>
+<li><strong>float</strong> — números reais em ponto flutuante, com 64 dígitos binários de precisão; usa "." para separar a parte decimal, não ",".</li>
+<li><strong>complex</strong> — números complexos; a letra "j" (maiúscula ou minúscula) representa o número imaginário.</li>
+<li><strong>None</strong> (NoneType) — lugar reservado vazio, usado para representar algo desconhecido no momento.</li>
+<li><strong>str</strong> — texto, declarado com aspas simples ou duplas, de modo equivalente.</li>
+<li><strong>tuple</strong> — apresentado com parênteses (opcionais), elementos separados por vírgula.</li>
+<li><strong>type</strong> — objetos utilizados para manipulação de tipos.</li>
+</ul>
+`,
+quiz:[
+ {statement:'Execute mentalmente: a = 1; b = a; a = 2. Qual o valor de b após essas três linhas, segundo o modelo de memória da apostila?',
+  options:['1, pois b aponta para o objeto que a apontava no momento da atribuição, e as duas variáveis são independentes.','2, pois b está permanentemente vinculada a a e muda junto com ela.','Erro, pois não é possível atribuir b = a antes de definir um tipo.','0, pois a reatribuição de a zera o valor de b.'],
+  correct:0, justification:'A apostila mostra explicitamente que b e a são variáveis independentes: quando a passa a apontar para um novo objeto, b continua apontando para o valor antigo (1).'},
+ {statement:'Seguindo a sequência a=1; b=a; a=2; c=b+6, qual o valor de c?',
+  options:['8, pois soma-se 6 ao valor atual de a.','7, pois b vale 1 e 1+6=7.','2, pois c recebe o valor de a.','Erro, pois b já foi sobrescrita por a=2.'],
+  correct:1, justification:'Como b é independente de a e vale 1, c = b + 6 = 1 + 6 = 7, conforme a Figura 8 da apostila.'},
+ {statement:'Qual é a ordem correta dos 3 passos da atribuição, segundo Melo (2019) citado na apostila?',
+  options:['1) cria-se a variável; 2) gera-se o objeto; 3) o objeto aponta para a variável.','1) gera-se o objeto do lado direito; 2) cria-se a variável se não existir; 3) a variável passa a apontar para o objeto.','1) a variável aponta para um objeto antigo; 2) o objeto é apagado; 3) um novo objeto é criado.','1) o valor é convertido para string; 2) a variável é nomeada; 3) o valor é impresso na tela.'],
+  correct:1, justification:'A apostila descreve exatamente essa ordem: primeiro o objeto é gerado, depois a variável é criada (se necessário), e por fim ela passa a apontar para o objeto.'},
+ {statement:'No Python, a que valor inteiro o booleano True está associado, segundo a apostila?',
+  options:['0','1','-1','Não há associação a um valor inteiro.'],
+  correct:1, justification:'A apostila afirma que "o Python associa o número 1 ao valor True e 0 ao valor False".'},
+ {statement:'Considerando as regras de nomeação de variáveis (máx. 256 caracteres, sem espaços, sem símbolos matemáticos, iniciar com letra ou sublinhado), qual nome de variável é INVÁLIDO?',
+  options:['_saldo','saldo_total','2saldo','saldo2'],
+  correct:2, justification:'"2saldo" começa com um dígito, o que viola a regra "não começar com um dígito"; os demais seguem as regras apresentadas.'},
+ {statement:'O que o sinal "=" representa em Python, segundo a apostila?',
+  options:['Um operador de comparação de igualdade, equivalente ao "==" de outras linguagens.','Um operador de atribuição — não tem significado de igualdade matemática.','Um símbolo reservado apenas para declarar constantes.','Um erro de sintaxe quando usado fora de uma função.'],
+  correct:1, justification:'A apostila é explícita: "o sinal de igual na programação não corresponde à igualdade; ele é um operador de atribuição".'},
+ {statement:'Qual das opções a seguir NÃO está entre os 8 tipos básicos imutáveis listados pela apostila?',
+  options:['bool','tuple','list','complex'],
+  correct:2, justification:'Os 8 tipos imutáveis listados pela apostila são bool, int, float, complex, None, str, tuple e type — list não está entre eles.'},
+],
+discursive:{
+  question:'Explique por que, em Python, ao fazer b = a e depois mudar o valor de a, o valor de b não muda.',
+  threshold:3,
+  groups:[
+    {label:'Variáveis são independentes', synonyms:['independentes','independente','nao dependem uma da outra']},
+    {label:'b aponta para o objeto no momento da atribuição, sem vínculo permanente', synonyms:['aponta para o mesmo objeto','aponta para o objeto','nao gera relacao','nao cria vinculo','nao fica ligada','nao fica presa']},
+    {label:'a passa a apontar para um novo objeto', synonyms:['novo objeto','aponta para outro objeto','muda de objeto','objeto diferente']},
+    {label:'Objetos são imutáveis; só a referência muda', synonyms:['imutavel','nao pode ser modificado','nao e alterado','nao muda o objeto']},
+  ],
+  model:'Quando b = a é executado, b passa a apontar para o mesmo objeto que a apontava naquele momento — mas essa é uma operação pontual, e não cria um vínculo permanente entre as duas variáveis. Quando a é reatribuída (a = 2), ela passa a apontar para um objeto novo, enquanto b continua apontando para o objeto antigo. Como no Python os objetos não podem ser modificados após criados, cada variável só aponta para o que lhe foi atribuído, e as variáveis permanecem independentes.'
+}
+},
+
+/* =====================================================================
+   NÍVEL 7 — Operadores Aritméticos e Atribuição Composta
+   Unidade 2, Tópico 5
+   ===================================================================== */
+{
+id:'l7', world:'w2', title:'Operadores Aritméticos e Atribuição Composta', subtitle:'Unidade 2 · Tópico 5',
+didactic:`
+<p>Pensa numa caixa de ferramentas. As quatro ferramentas básicas são soma, subtração, multiplicação e divisão (+ - * /). Depois vêm três ferramentas especiais: potência (<code>**</code>), resto da divisão (<code>%</code>) e parte inteira da divisão (<code>//</code>).</p>
+<div class="analogy-box">Nessa "receita" de cálculo, a apostila estabelece uma ordem fixa de trabalho: primeiro as ferramentas especiais (<code>**</code>, <code>%</code>, <code>//</code>), depois multiplicação e divisão, e só por último soma e subtração. E se você quer forçar uma ordem diferente, só tem <strong>um</strong> tipo de "caixinha" disponível para isso: os parênteses — colchetes e chaves são reservados para outras coisas em Python.</div>
+<p>E para não escrever duas vezes o nome da mesma variável (<code>auxiliar = auxiliar + 3</code>), existe um atalho: <code>auxiliar += 3</code>. Menos digitação, menos chance de erro de digitação.</p>
+`,
+technical:`
+<p>O <strong>operador de atribuição</strong> mais simples é o <code>=</code>. Além dele, existem as quatro <strong>operações aritméticas básicas</strong>: soma (<code>+</code>), subtração (<code>-</code>), multiplicação (<code>*</code>) e divisão (<code>/</code>).</p>
+<pre>&gt;&gt;&gt; soma = 1 + 2
+&gt;&gt;&gt; print(soma)
+3
+&gt;&gt;&gt; subtracao = 4 - 3
+&gt;&gt;&gt; print(subtracao)
+1
+&gt;&gt;&gt; multiplicacao = 2 * 3
+&gt;&gt;&gt; print(multiplicacao)
+6
+&gt;&gt;&gt; divisao = 6 / 2
+&gt;&gt;&gt; print(divisao)
+3.0</pre>
+<p>Além dessas, existem os <strong>operadores adicionais</strong>: potenciação (<code>**</code>), módulo/resto da divisão (<code>%</code>) e parte inteira da divisão (<code>//</code>).</p>
+<pre>&gt;&gt;&gt; potencia = 2**3
+&gt;&gt;&gt; print(potencia)
+8
+&gt;&gt;&gt; resto = 10 % 3
+&gt;&gt;&gt; print(resto)
+1
+&gt;&gt;&gt; parteInteira = 10 // 3
+&gt;&gt;&gt; print(parteInteira)
+3</pre>
+<h3>5.1 Ordem de interpretação dos operadores</h3>
+<p>Segundo a apostila, a ordem de prioridade é: <strong>1º</strong> potência (<code>**</code>), módulo (<code>%</code>) e parte inteira (<code>//</code>); <strong>2º</strong> multiplicação e divisão (<code>*</code>, <code>/</code>); <strong>3º</strong> soma e subtração (<code>+</code>, <code>-</code>).</p>
+<p>Para agrupar expressões, Python usa <strong>apenas parênteses</strong> — colchetes e chaves têm funções especiais na linguagem, não servem para agrupar contas. A ordem de interpretação vai sempre do parêntese mais interno para o mais externo. Exemplo: em <code>1 * 2 – (3 + 4)</code>, avalia-se primeiro <code>3 + 4 = 7</code>, depois <code>1 * 2 = 2</code>, e por fim <code>2 – 7 = -5</code>.</p>
+<h3>5.2 Operadores de atribuição compostos</h3>
+<p>Em vez de escrever <code>auxiliar = auxiliar + 3</code>, pode-se escrever <code>auxiliar += 3</code> — funcionalmente idêntico, porém mais limpo e menos sujeito a erro de digitação. Além de <code>+=</code>, existem <code>-=</code>, <code>*=</code>, <code>/=</code> e <code>%=</code>.</p>
+<pre>&gt;&gt;&gt; auxiliar = 3
+&gt;&gt;&gt; auxiliar = auxiliar + 2
+&gt;&gt;&gt; print(auxiliar)
+5
+&gt;&gt;&gt; auxiliar = 3
+&gt;&gt;&gt; auxiliar += 2
+&gt;&gt;&gt; print(auxiliar)
+5</pre>
+`,
+quiz:[
+ {statement:'Segundo a ordem de interpretação de operadores da apostila (potência, módulo e parte inteira primeiro; depois multiplicação e divisão; por último soma e subtração), qual o resultado de 3 * 4 % 5?',
+  options:['12','2','20','0'],
+  correct:0, justification:'Pela ordem da apostila, avalia-se primeiro o operador de módulo (4 % 5 = 4), e só depois a multiplicação (3 * 4 = 12).'},
+ {statement:'Qual o resultado de 1 * 2 – (3 + 4), segundo a apostila?',
+  options:['1','-5','-9','5'],
+  correct:1, justification:'Primeiro avalia-se o parêntese (3+4=7), depois a multiplicação (1*2=2), e por fim a subtração (2-7=-5), exatamente como no exemplo da apostila.'},
+ {statement:'Qual operador de atribuição composto realiza a subtração e a atribuição em um só passo?',
+  options:['=-','-=','—=','=-='],
+  correct:1, justification:'A apostila lista -=, análogo ao +=, entre os operadores de atribuição compostos.'},
+ {statement:'Após o código "auxiliar = 3" seguido de "auxiliar += 2" e "print(auxiliar)", o que é exibido?',
+  options:['3','5','32','23'],
+  correct:1, justification:'auxiliar += 2 equivale a auxiliar = auxiliar + 2, ou seja, 3 + 2 = 5, como no exemplo da Figura 13 da apostila.'},
+ {statement:'Segundo a apostila, o que pode ser usado para agrupar/alterar a ordem de uma expressão aritmética em Python?',
+  options:['Parênteses, colchetes e chaves, todos com a mesma função de agrupamento.','Somente parênteses; colchetes e chaves têm funções especiais na linguagem.','Somente chaves, pois colchetes são usados apenas em listas.','Nenhum símbolo — a ordem dos operadores nunca pode ser alterada.'],
+  correct:1, justification:'A apostila afirma que, em Python, é possível usar apenas os parênteses para agrupar; colchetes e chaves possuem funções especiais na linguagem.'},
+],
+discursive:{
+  question:'Explique a ordem de precedência dos operadores aritméticos em Python segundo a apostila, e qual símbolo pode ser usado para alterar essa ordem.',
+  threshold:3,
+  groups:[
+    {label:'Potência, módulo e parte inteira primeiro', synonyms:['potencia','modulo','parte inteira','resto da divisao']},
+    {label:'Depois multiplicação e divisão', synonyms:['multiplicacao e divisao','multiplicacao','divisao']},
+    {label:'Por último soma e subtração', synonyms:['soma e subtracao','adicao e subtracao','soma','subtracao']},
+    {label:'Parênteses agrupam (do mais interno ao mais externo)', synonyms:['parenteses','mais interno','mais externo']},
+  ],
+  model:'Segundo a apostila, a ordem de prioridade dos operadores aritméticos começa pela potência (**), módulo (%) e parte inteira da divisão (//); em seguida são avaliados multiplicação e divisão (*, /); e só por último soma e subtração (+, -). Para alterar essa ordem, usa-se apenas o parêntese — colchetes e chaves têm funções especiais na linguagem — sendo a expressão avaliada sempre do parêntese mais interno para o mais externo.'
+}
+},
+
+/* =====================================================================
+   NÍVEL 8 — Comparação: Operadores Relacionais e Lógicos em Python
+   Unidade 3, Tópicos 1, 2 e 3
+   ===================================================================== */
+{
+id:'l8', world:'w3', title:'Comparação: Operadores Relacionais e Lógicos em Python', subtitle:'Unidade 3 · Tópicos 1, 2 e 3',
+didactic:`
+<p>Toda decisão que uma máquina toma é, no fundo, uma comparação. Mas máquina não entende "melhor" ou "pior" (isso é opinião, subjetivo) — ela só entende números e comparações objetivas. Por isso, quando a apostila fala em "suco de laranja é melhor que suco de limão", ela mostra como transformar isso em algo mensurável: comparar a <em>acidez</em> de cada um.</p>
+<div class="analogy-box">
+<p><strong>OU (or)</strong> é um bufê generoso: basta UMA das condições ser verdadeira para o resultado ser verdadeiro. Não é "escolha só uma opção" (isso seria "ou exclusivo") — as duas podem valer juntas.</p>
+<p><strong>E (and)</strong> exige as duas condições ao mesmo tempo — como as duas assinaturas do banco.</p>
+<p><strong>NÃO (not)</strong> simplesmente inverte o resultado.</p>
+</div>
+<p>No cinema, "IDADE >= 18" é a tradução direta de "idade maior ou igual a 18": no dia do 18º aniversário, a pessoa já entra — o "igual" está incluído.</p>
+`,
+technical:`
+<p>A essência de qualquer decisão é uma comparação. Segundo Law (2008), podemos classificar as comparações em 4 categorias:</p>
+<ul>
+<li><strong>Equivalência ou similaridade</strong> — igual ou diferente;</li>
+<li><strong>Qualidade</strong> — melhor ou pior;</li>
+<li><strong>Dimensão</strong> — maior ou menor;</li>
+<li><strong>Quantidade</strong> — mais ou menos, muito ou pouco.</li>
+</ul>
+<p>Categorias subjetivas (como "qualidade") exigem quantificação para serem representadas em programação — ex.: medir a acidez dos sucos, em vez de dizer apenas "é melhor".</p>
+<h3>Operadores relacionais</h3>
+<div class="tbl-wrap"><table><caption>QUADRO 1 – Operadores relacionais</caption>
+<tr><th>Operador relacional</th><th>Descrição</th><th>Representação em Python</th></tr>
+<tr><td>A = B</td><td>A igual a B</td><td>A == B</td></tr>
+<tr><td>A ≠ B</td><td>A diferente de B</td><td>A != B</td></tr>
+<tr><td>A &gt; B</td><td>A maior do que B</td><td>A &gt; B</td></tr>
+<tr><td>A ≥ B</td><td>A maior ou igual a B</td><td>A &gt;= B</td></tr>
+<tr><td>A &lt; B</td><td>A menor do que B</td><td>A &lt; B</td></tr>
+<tr><td>A ≤ B</td><td>A menor ou igual a B</td><td>A &lt;= B</td></tr>
+</table></div>
+<p><strong>Exemplo (cinema):</strong> "a idade mínima para entrada no cinema é 18 anos" → PERMISSÃO PARA INGRESSO — IDADE &gt;= 18.</p>
+<pre>LER IDADE DO ESTUDANTE
+SE A IDADE &gt;= 18 ANOS:
+    ENTÃO
+        ACESSO PERMITIDO (mensagem "ACESSO PERMITIDO")
+    SENÃO
+        ACESSO NEGADO (mensagem "IDADE MÍNIMA NÃO ATENDIDA — ACESSO NEGADO")</pre>
+<h3>Operadores lógicos: OU, E e NÃO</h3>
+<div class="tbl-wrap"><table><caption>QUADRO 2 – Tabela verdade do operador lógico OU</caption>
+<tr><th>A</th><th>B</th><th>A ou B</th></tr>
+<tr><td>F</td><td>F</td><td>F</td></tr><tr><td>F</td><td>V</td><td>V</td></tr><tr><td>V</td><td>F</td><td>V</td></tr><tr><td>V</td><td>V</td><td>V</td></tr>
+</table></div>
+<p>O operador A ou B somente é falso quando A é falso e B é falso.</p>
+<div class="tbl-wrap"><table><caption>QUADRO 3 – Tabela verdade do operador lógico E</caption>
+<tr><th>A</th><th>B</th><th>A e B</th></tr>
+<tr><td>F</td><td>F</td><td>F</td></tr><tr><td>F</td><td>V</td><td>F</td></tr><tr><td>V</td><td>F</td><td>F</td></tr><tr><td>V</td><td>V</td><td>V</td></tr>
+</table></div>
+<div class="tbl-wrap"><table><caption>QUADRO 4 – Tabela verdade do operador lógico de Negação</caption>
+<tr><th>A</th><th>não A</th></tr><tr><td>F</td><td>V</td></tr><tr><td>V</td><td>F</td></tr>
+</table></div>
+<div class="tbl-wrap"><table><caption>QUADRO 5 – Operadores lógicos e sua representação em Python</caption>
+<tr><th>Operador lógico</th><th>Descrição</th><th>Representação em Python</th></tr>
+<tr><td>A ou B</td><td>A OU B</td><td>A or B</td></tr>
+<tr><td>A e B</td><td>A E B</td><td>A and B</td></tr>
+<tr><td>não A</td><td>NÃO A</td><td>not A</td></tr>
+</table></div>
+<p><strong>Exemplo (serviço militar):</strong> "os homens devem se apresentar aos 18 anos, enquanto as mulheres podem se apresentar com idade maior ou igual a 18 e menor do que 36 anos" →</p>
+<p>SERVIÇO MILITAR – (HOMENS; IDADE = 18 ANOS) OU (MULHERES; IDADE ≥ 18 ANOS E IDADE &lt; 36 ANOS).</p>
+`,
+quiz:[
+ {statement:'Como se representa em Python o operador relacional "A igual a B"?',
+  options:['A = B','A == B','A === B','A eq B'],
+  correct:1, justification:'A apostila mostra que a igualdade é representada por "==" em Python; um único "=" é o operador de atribuição, não de comparação.'},
+ {statement:'No exemplo do cinema (PERMISSÃO — IDADE >= 18), se um estudante tem exatamente 18 anos, qual é o resultado do teste lógico?',
+  options:['Falso, pois 18 não é maior que 18.','Verdadeiro, pois o operador >= inclui a igualdade.','Depende do mês de nascimento do estudante.','Erro, pois o operador >= não pode ser usado com idades.'],
+  correct:1, justification:'O operador >= (maior ou igual) inclui o caso de igualdade; com idade=18, a condição IDADE>=18 é verdadeira.'},
+ {statement:'Como se representa em Python o operador lógico "A OU B"?',
+  options:['A || B','A or B','A OR(B)','A e B'],
+  correct:1, justification:'Segundo o Quadro 5 da apostila, o operador OU é representado em Python pela palavra "or".'},
+ {statement:'Segundo a tabela verdade da apostila, quando o operador "A ou B" é falso?',
+  options:['Quando apenas um dos dois é verdadeiro (nunca quando os dois são verdadeiros ao mesmo tempo).','Somente quando A é falso e B é falso.','Sempre que A for falso, independentemente de B.','Nunca — o operador OU é sempre verdadeiro.'],
+  correct:1, justification:'O operador OU da apostila é inclusivo: é falso apenas quando os dois são falsos; quando os dois são verdadeiros, o resultado também é verdadeiro (diferente do "ou exclusivo").'},
+ {statement:'Segundo o exemplo do serviço militar, uma mulher de 40 anos deve se apresentar ao serviço militar?',
+  options:['Sim, pois IDADE >= 18 é verdadeiro, e isso já satisfaz a regra.','Não, pois embora IDADE >= 18 seja verdadeiro, a condição IDADE < 36 é falsa, e a regra exige as duas condições (E) para mulheres.','Sim, pois toda mulher maior de idade deve se apresentar.','Não é possível saber sem a idade exata do homem correspondente.'],
+  correct:1, justification:'A regra para mulheres exige IDADE>=18 E IDADE<36 (as duas condições conectadas por E); aos 40 anos, a segunda condição é falsa, então a regra completa é falsa.'},
+ {statement:'De acordo com a apostila, aplicar duas vezes o operador de negação (não (não A)) resulta em:',
+  options:['Sempre falso, independentemente do valor de A.','O mesmo valor lógico de A.','Sempre verdadeiro, independentemente do valor de A.','Um erro de sintaxe em Python.'],
+  correct:1, justification:'A dupla negação retorna ao estado original: a negação da negação de A é o próprio A.'},
+ {statement:'Segundo Law (2008), citado na apostila, quais são as 4 categorias de comparação?',
+  options:['Equivalência, qualidade, dimensão e quantidade.','Equivalência, frequência, dimensão e quantidade.','Velocidade, qualidade, dimensão e quantidade.','Equivalência, qualidade, tempo e quantidade.'],
+  correct:0, justification:'A apostila cita exatamente essas quatro categorias: equivalência/similaridade, qualidade, dimensão e quantidade.'},
+],
+discursive:{
+  question:'Explique a diferença entre o operador OU e o operador E em Python, dando um exemplo de quando cada um é verdadeiro.',
+  threshold:3,
+  groups:[
+    {label:'OU (or) é verdadeiro se pelo menos uma condição for verdadeira', synonyms:['pelo menos uma','ao menos uma','basta uma','or']},
+    {label:'E (and) é verdadeiro somente se ambas as condições forem verdadeiras', synonyms:['ambas verdadeiras','as duas verdadeiras','and','somente se ambas','duas condicoes verdadeiras']},
+    {label:'OU só é falso quando as duas são falsas', synonyms:['so e falso quando as duas sao falsas','ambas falsas','duas falsas']},
+    {label:'Operadores relacionais formam as condições comparadas', synonyms:['relacionais','comparacao','==','maior','menor']},
+  ],
+  model:'O operador OU (or) resulta em verdadeiro quando pelo menos uma das duas condições é verdadeira, só sendo falso quando as duas são falsas (ex.: idade>=18 or zona=="S"). Já o operador E (and) só resulta em verdadeiro quando as duas condições são verdadeiras ao mesmo tempo (ex.: idade>=18 and idade<36); se qualquer uma das duas for falsa, o resultado do E já é falso.'
+}
+},
+
+/* =====================================================================
+   NÍVEL 9 — if, if...else, if...elif...else e Resolução de Problemas
+   Unidade 3, Tópicos 4 e 5
+   ===================================================================== */
+{
+id:'l9', world:'w3', title:'if, if...else, if...elif...else e Resolução de Problemas', subtitle:'Unidade 3 · Tópicos 4 e 5',
+didactic:`
+<div class="analogy-box">
+<p><strong>if simples:</strong> "se chover, eu levo guarda-chuva" — e eu saio de casa de qualquer jeito (o "sair de casa" acontece sempre; só o guarda-chuva é condicional).</p>
+<p><strong>if...else:</strong> "se chover, levo guarda-chuva; senão, levo óculos de sol" — sempre uma das duas coisas acontece, nunca as duas, nunca nenhuma.</p>
+<p><strong>if...elif...else:</strong> é o cardápio de um restaurante: se pedir o prato 1, vem tal prato; senão, se pedir o prato 2, vem outro; senão, se pedir o prato 3... e assim por diante, até cair no "senão" final se nada bateu.</p>
+</div>
+<p>E um detalhe que engana muita gente vindo de outras linguagens: em Python <strong>não existem chaves { }</strong> para marcar onde começa e termina um bloco — é a <strong>indentação</strong> (o quanto o texto está deslocado para a direita) que define isso.</p>
+`,
+technical:`
+<h3>4.1 Estrutura condicional if simples</h3>
+<pre>if condição lógica:   #Bloco A
+    Bloco de comandos executados caso a condição lógica seja verdadeira
+#Bloco B
+Comandos executados após o teste</pre>
+<p>Se a condição for VERDADEIRA, o Bloco A é executado e, na sequência, o Bloco B também. Se a condição for FALSA, somente o Bloco B é executado.</p>
+<pre>if temperatura&gt;25:
+    print("Ambiente quente, ajustando ar-condicionado para clima de verão")
+    AR_CONDICIONADO(VERAO)
+print("Ligando o ar-condicionado")
+AR_CONDICIONADO(ON)</pre>
+<h3>4.2 Estrutura condicional if...else</h3>
+<pre>if condição lógica:   #Bloco A
+    Bloco de comandos executados caso a condição lógica seja VERDADEIRA
+else:
+    #Bloco B
+    Bloco de comandos executados caso a condição lógica seja FALSA
+#Bloco C
+Comandos executados após o teste.</pre>
+<p>Executa o Bloco A OU o Bloco B (nunca os dois), e depois sempre o Bloco C.</p>
+<pre>if temperatura&gt;25:
+    print("Ambiente quente, ajustando ar-condicionado para clima de verão")
+    AR_CONDICIONADO(VERAO)
+else:
+    print("Ambiente frio, ajustando ar-condicionado para clima de inverno")
+    AR_CONDICIONADO(INVERNO)
+print("Ligando o ar-condicionado")
+AR_CONDICIONADO(ON)</pre>
+<h3>4.3 Estrutura condicional if...elif...else</h3>
+<p>Permite encadear vários testes, frequentemente usada como menu de opções.</p>
+<pre>if condição lógica1:    #Bloco A
+    ...
+elif condição lógica2:  #Bloco B
+    ...
+elif condição lógica3:  #Bloco C
+    ...
+else:                   #Bloco N
+    Bloco de comandos executados caso NENHUMA das condições seja VERDADEIRA
+#Bloco X
+Comandos executados após o teste.</pre>
+<p>Em Python, é a <strong>indentação/tabulação</strong> que define os blocos de cada parte do comando if — não chaves como em outras linguagens.</p>
+<h3>5. Programa da garagem — versão 2 (com zoneamento)</h3>
+<p>Regras: zona norte 25% máximo; zonas leste e oeste 30%; zona sul 40%. O programa envolve <strong>5 variáveis</strong>: largura e profundidade da garagem, largura e profundidade do terreno, e a zona de localização.</p>
+<pre>Largura_Garagem=float(input("Entre com Largura da garagem em metros "))
+Profundidade_Garagem=float(input("Entre com a Profundidade da garagem em metros "))
+Area_Garagem = Largura_Garagem * Profundidade_Garagem
+
+Largura_Terreno=float(input("Entre com Largura do Terreno em metros "))
+Profundidade_Terreno=float(input("Entre com a Profundidade do Terreno em metros "))
+Area_Terreno=Largura_Terreno * Profundidade_Terreno
+
+Percentual = ((Area_Garagem)/(Area_Terreno))* 100
+Zona=input("Entre com Zona de localização: Sul=S, Norte=N, Leste=L e Oeste=W :  ")
+
+print("Imóvel localizado na zona: ",Zona)
+print("Percentual de ocupação: ",Percentual)
+
+# Sequencia de decisão
+if Zona=="N" and Percentual&lt;=25:
+    print("projeto atende norma de zoneamento do plano diretor")
+elif Zona=="L" or Zona=="W" and Percentual&lt;=30:
+    print("projeto atende norma de zoneamento do plano diretor")
+elif Zona=="S" and Percentual&lt;=40:
+    print("projeto atende norma de zoneamento do plano diretor")
+else:
+    print("REVISAR MEDIDAS. projeto NÃO atende norma de zoneamento do plano diretor")</pre>
+<p>A apostila também apresenta uma <strong>versão alternativa</strong> equivalente, usando <code>if</code> aninhado dentro de cada <code>elif</code>:</p>
+<pre># Nova Sequencia de decisão
+if Zona=="N":
+    if Percentual&lt;=25:
+        print("projeto atende norma de zoneamento do plano diretor")
+elif Zona=="L" or Zona=="W":
+    if Percentual&lt;=30:
+        print("projeto atende norma de zoneamento do plano diretor")
+elif Zona=="S":
+    if Percentual&lt;=40:
+        print("projeto atende norma de zoneamento do plano diretor")
+else:
+    print("REVISAR MEDIDAS. projeto NÃO atende norma de zoneamento do plano diretor")</pre>
+`,
+quiz:[
+ {statement:'Na estrutura "if condição: #Bloco A" seguida de "#Bloco B" (if simples), quando o Bloco B é executado?',
+  options:['Somente se a condição lógica for verdadeira.','Sempre, independentemente do resultado da condição lógica.','Somente se a condição lógica for falsa.','Nunca; o Bloco B é apenas um comentário.'],
+  correct:1, justification:'No if simples, o Bloco B (fora do if) é sempre executado após o teste, seja a condição verdadeira ou falsa; só o Bloco A é condicional.'},
+ {statement:'Na estrutura if...else, se a condição lógica for FALSA, o que é executado?',
+  options:['O Bloco A e, em seguida, o Bloco C.','O Bloco B e, em seguida, o Bloco C.','Somente o Bloco A.','Nenhum bloco é executado.'],
+  correct:1, justification:'Se a condição é falsa, apenas o Bloco B (do else) é executado; depois, o Bloco C (comandos após o teste) sempre executa.'},
+ {statement:'O que define os blocos de um comando if em Python, segundo a apostila (diferente de linguagens que usam chaves { })?',
+  options:['O ponto e vírgula ao final de cada linha.','A indentação/tabulação do código.','O uso obrigatório de parênteses ao redor da condição.','Comentários especiais inseridos pelo programador.'],
+  correct:1, justification:'A apostila afirma que, em Python, a tabulação e o alinhamento das instruções definem os blocos do comando if.'},
+ {statement:'Na versão alternativa (Figura 8) do programa da garagem, o que foi usado dentro de cada bloco elif para testar o percentual, em vez de conectar as condições com "and"?',
+  options:['Um novo elif para cada zona.','Um if aninhado dentro do bloco do elif correspondente.','Um laço for percorrendo as zonas.','Uma função separada para cada zona.'],
+  correct:1, justification:'Na Figura 8 da apostila, cada elif de zona contém um if aninhado testando o percentual, como alternativa equivalente ao uso de "and".'},
+ {statement:'Quantas variáveis de entrada compõem o problema da garagem versão 2 (com zoneamento), segundo a apostila?',
+  options:['4 (largura e profundidade da garagem e do terreno).','5 (largura e profundidade da garagem, largura e profundidade do terreno, e a zona).','3 (área da garagem, área do terreno e percentual).','6, incluindo o nome do proprietário do imóvel.'],
+  correct:1, justification:'A apostila lista explicitamente cinco variáveis: largura e profundidade da garagem, largura e profundidade do terreno, e a zona de localização.'},
+ {statement:'Segundo as regras do plano diretor apresentadas na apostila, qual é o percentual máximo de ocupação permitido para a zona sul?',
+  options:['25%','30%','40%','50%'],
+  correct:2, justification:'A apostila define 40% como o percentual máximo para a zona sul (a menos povoada), diferente dos 25% da zona norte e 30% de leste/oeste.'},
+ {statement:'Na estrutura if...elif...else usada como menu de opções, o que acontece se NENHUMA das condições em cascata for verdadeira?',
+  options:['O programa gera um erro obrigatoriamente.','O bloco do else final (Bloco N) é executado.','O primeiro bloco (Bloco A) é executado por padrão.','Nada é executado, e o programa é encerrado sem aviso.'],
+  correct:1, justification:'Segundo a apostila, se nenhuma condição lógica dos testes em cadeia for verdadeira, o bloco do else (Bloco N) é executado.'},
+],
+discursive:{
+  question:'Explique a diferença entre if simples, if...else e if...elif...else.',
+  threshold:4,
+  groups:[
+    {label:'if simples: bloco condicional, o resto sempre executa', synonyms:['se verdadeira','bloco b sempre','independente do resultado','sempre executado depois']},
+    {label:'if...else: escolhe entre dois blocos, nunca os dois', synonyms:['dois blocos','um ou outro','senao','nunca os dois']},
+    {label:'if...elif...else: encadeamento de vários testes', synonyms:['encadeamento','cadeia','varios testes','elif','testes em cascata']},
+    {label:'Indentação define os blocos', synonyms:['indentacao','tabulacao','alinhamento']},
+    {label:'elif pode funcionar como menu de opções', synonyms:['menu','opcoes','cardapio']},
+  ],
+  model:'No if simples, o bloco dentro do if só executa se a condição for verdadeira, mas o restante do código sempre executa depois, independente do resultado. No if...else, o programa escolhe entre dois blocos (o do if ou o do else) — nunca os dois ao mesmo tempo. Já no if...elif...else, é possível encadear vários testes em cascata, funcionando muitas vezes como um menu de opções, executando o bloco da primeira condição verdadeira ou o else final se nenhuma bater. Em todos os casos, é a indentação (tabulação) que define onde cada bloco começa e termina.'
+}
+},
+
+/* =====================================================================
+   NÍVEL 10 — O Comando for e o Teste de Mesa
+   Unidade 4, Tópicos 1 e 2
+   ===================================================================== */
+{
+id:'l10', world:'w4', title:'O Comando for e o Teste de Mesa', subtitle:'Unidade 4 · Tópicos 1 e 2',
+didactic:`
+<p>O <code>for</code> é passar por cada carta de um baralho, uma de cada vez, fazendo algo com cada uma. O <code>range</code> é um baralho "de mentirinha" que você cria na hora, indicando só onde começar e onde parar.</p>
+<div class="analogy-box">
+<p><strong>Variável contadora</strong> é um clicador de catraca: cada pessoa que passa, clica +1 — não importa quem é a pessoa, só importa que passou. É o caso de <code>qtdeLetras</code>.</p>
+<p><strong>Variável acumuladora</strong> é um cofrinho: a cada moeda que cai, o valor guardado cresce <em>de acordo com o valor daquela moeda</em>. É o caso de <code>soma</code>.</p>
+</div>
+<p>E o <strong>teste de mesa</strong> aqui vira uma tabela: uma linha por volta do laço, uma coluna por variável, anotando o valor de cada uma a cada passada — é assim que você prova, na unha, se o algoritmo está certo antes de rodar no computador (e é o formato clássico de questão de prova: "qual o valor de X na iteração N?").</p>
+`,
+technical:`
+<h3>O comando for</h3>
+<p>O <code>for</code> é uma estrutura de repetição baseada em uma lista, executando um código para cada elemento.</p>
+<pre>lista = [10, 11, 12, 13, 14, 15]
+for valor in lista:
+    print(valor)
+# imprime: 10 11 12 13 14 15</pre>
+<p>O comando <code>range</code> cria uma lista de valores iniciada em 0 por padrão:</p>
+<pre>for valor in range(5):
+    print(valor)
+# imprime: 0 1 2 3 4
+
+for valor in range(4, 8):
+    print(valor)
+# imprime: 4 5 6 7</pre>
+<p>O <code>for</code> também percorre uma <strong>string</strong>, pois texto é uma lista de caracteres:</p>
+<pre>texto = "Python"
+for caracter in texto:
+    print(caracter)
+# imprime: P y t h o n</pre>
+<h3>1.1 Variáveis Contadoras e Acumuladoras</h3>
+<p><strong>Contadora</strong> (ex.: <code>qtdeLetras</code>) — incrementa um valor fixo a cada passagem pelo laço, <strong>ignorando</strong> o valor da variável de iteração:</p>
+<pre>frase = "A ligeira raposa marrom ataca o cão preguiçoso"
+qtdeLetras = 0
+for letra in frase:
+    qtdeLetras += 1
+print("A frase possui " + str(qtdeLetras) + " letras.")
+# A frase possui 47 letras.</pre>
+<p><strong>Acumuladora</strong> (ex.: <code>soma</code>) — usa o valor da variável de iteração a cada passagem:</p>
+<pre>dados = [[1, 2, 3],[4, 5, 6],[7, 8, 9]]
+soma = 0
+qtde = 0
+for valor in dados:
+    soma += valor
+    qtde += 1
+media = soma / qtde
+# soma=46; qtde=6; media=4.833333333333333</pre>
+<h3>2.1 Teste de mesa — soma dos pares até 10</h3>
+<pre>soma = 0
+for numero in range(10):
+    if (numero % 2) == 0:
+        soma += numero</pre>
+<div class="tbl-wrap"><table><caption>QUADRO 1 – Teste de mesa: soma dos pares até 10</caption>
+<tr><th>Iteração</th><th>número</th><th>soma</th></tr>
+<tr><td>1</td><td>0</td><td>0</td></tr><tr><td>2</td><td>1</td><td>0</td></tr>
+<tr><td>3</td><td>2</td><td>2</td></tr><tr><td>4</td><td>3</td><td>2</td></tr>
+<tr><td>5</td><td>4</td><td>6</td></tr><tr><td>6</td><td>5</td><td>6</td></tr>
+<tr><td>7</td><td>6</td><td>12</td></tr><tr><td>8</td><td>7</td><td>12</td></tr>
+<tr><td>9</td><td>8</td><td>20</td></tr><tr><td>10</td><td>9</td><td>20</td></tr>
+</table></div>
+<h3>2.2 Teste de mesa — múltiplos de 3 nos 20 primeiros naturais</h3>
+<pre>noVerificados = 0
+noMultiplos = 0
+for numero in range(20):
+    noVerificados += 1
+    if (numero % 3) == 0:
+        noMultiplos += 1
+print(noVerificados)  # 20
+print(noMultiplos)    # 7</pre>
+<div class="tbl-wrap"><table><caption>QUADRO 2 – Teste de mesa: múltiplos de 3 nos 20 primeiros naturais</caption>
+<tr><th>número</th><th>noVerificados</th><th>noMultiplos</th></tr>
+<tr><td>0</td><td>1</td><td>1</td></tr><tr><td>1</td><td>2</td><td>1</td></tr><tr><td>2</td><td>3</td><td>1</td></tr>
+<tr><td>3</td><td>4</td><td>2</td></tr><tr><td>4</td><td>5</td><td>2</td></tr><tr><td>5</td><td>6</td><td>2</td></tr>
+<tr><td>6</td><td>7</td><td>3</td></tr><tr><td>7</td><td>8</td><td>3</td></tr><tr><td>8</td><td>9</td><td>3</td></tr>
+<tr><td>9</td><td>10</td><td>4</td></tr><tr><td>10</td><td>11</td><td>4</td></tr><tr><td>11</td><td>12</td><td>4</td></tr>
+<tr><td>12</td><td>13</td><td>5</td></tr><tr><td>13</td><td>14</td><td>5</td></tr><tr><td>14</td><td>15</td><td>5</td></tr>
+<tr><td>15</td><td>16</td><td>6</td></tr><tr><td>16</td><td>17</td><td>6</td></tr><tr><td>17</td><td>18</td><td>6</td></tr>
+<tr><td>18</td><td>19</td><td>7</td></tr><tr><td>19</td><td>20</td><td>7</td></tr>
+</table></div>
+`,
+quiz:[
+ {statement:'No algoritmo da soma dos pares até 10 (Quadro 1), qual o valor da variável soma logo após a 5ª iteração (número=4)?',
+  options:['4','6','2','12'],
+  correct:1, justification:'Segundo o Quadro 1 da apostila, na 5ª iteração número=4 (par) é somado a soma, que passa de 2 para 6.'},
+ {statement:'No mesmo algoritmo, qual o valor de soma logo após a 8ª iteração (número=7)?',
+  options:['12, pois número=7 é ímpar e não altera soma.','19, pois soma acumula todos os números, pares ou ímpares.','7, pois soma passa a valer o próprio número.','20, antecipando a próxima iteração par.'],
+  correct:0, justification:'Como 7 é ímpar, a condição (numero % 2)==0 é falsa, e soma permanece 12, o mesmo valor da iteração anterior — conforme o Quadro 1.'},
+ {statement:'No algoritmo dos múltiplos de 3 (Quadro 2), depois de processar número=9 (10ª iteração), quais são os valores de noVerificados e noMultiplos?',
+  options:['noVerificados=9, noMultiplos=3','noVerificados=10, noMultiplos=4','noVerificados=10, noMultiplos=3','noVerificados=9, noMultiplos=4'],
+  correct:1, justification:'Segundo o Quadro 2, na linha do número 9, noVerificados=10 e noMultiplos=4 (já que 9 também é múltiplo de 3).'},
+ {statement:'Qual a saída de "for valor in range(4, 8): print(valor)"?',
+  options:['4, 5, 6, 7, 8','4, 5, 6, 7','3, 4, 5, 6, 7','5, 6, 7, 8'],
+  correct:1, justification:'range(4,8) gera valores de 4 até 7; o valor 8 (limite superior) NÃO é incluído, um erro comum de iniciante.'},
+ {statement:'Na variável contadora qtdeLetras (Figura 4 da apostila), o que acontece a cada letra percorrida pelo for?',
+  options:['qtdeLetras soma o código numérico (ASCII) de cada letra percorrida.','qtdeLetras é incrementada em 1, independentemente de qual letra está sendo percorrida.','qtdeLetras recebe diretamente o valor da variável de iteração letra.','qtdeLetras é reiniciada a cada letra encontrada.'],
+  correct:1, justification:'A apostila explica que a variável contadora não considera o valor da variável de iteração — apenas incrementa +1 a cada passagem.'},
+ {statement:'Em "for caracter in \\"Python\\": print(caracter)", qual é o primeiro caractere impresso?',
+  options:['y','P','t','n'],
+  correct:1, justification:'O for percorre a string caractere a caractere a partir do índice 0; o primeiro caractere de "Python" é "P".'},
+ {statement:'No algoritmo da soma dos pares até 10, a condição "(numero % 2) == 0" testa o quê?',
+  options:['Se número é maior que 2.','Se o resto da divisão de número por 2 é igual a zero (ou seja, se número é par).','Se número é igual ao dobro de 2.','Se número já foi somado anteriormente.'],
+  correct:1, justification:'O operador % retorna o resto da divisão; resto 0 na divisão por 2 indica que o número é par.'},
+],
+discursive:{
+  question:'Explique a diferença entre uma variável contadora e uma variável acumuladora, usando o exemplo de qtdeLetras e de soma.',
+  threshold:3,
+  groups:[
+    {label:'Contadora incrementa valor fixo, ignora o valor da iteração', synonyms:['incrementa 1','soma 1','valor fixo','ignora o valor','sempre mais 1']},
+    {label:'Acumuladora soma o valor da variável de iteração', synonyms:['soma o valor','usa o valor','acumula o valor','depende do valor']},
+    {label:'qtdeLetras é um exemplo de contadora', synonyms:['qtdeletras','contadora']},
+    {label:'soma é um exemplo de acumuladora (cálculo de média)', synonyms:['soma','acumuladora','media']},
+  ],
+  model:'A variável contadora, como qtdeLetras, incrementa sempre um valor fixo (+1) a cada passagem pelo laço for, ignorando o valor da variável de iteração — ela só conta quantas vezes o laço passou. Já a variável acumuladora, como soma, usa o próprio valor da variável de iteração a cada passagem, somando-o ao total acumulado — por isso é usada, por exemplo, no cálculo de uma média.'
+}
+},
+
+/* =====================================================================
+   NÍVEL 11 — Aplicações Práticas
+   Unidade 4, Tópico 3
+   ===================================================================== */
+{
+id:'l11', world:'w4', title:'Aplicações Práticas', subtitle:'Unidade 4 · Tópico 3',
+didactic:`
+<div class="analogy-box">
+<p><strong>Fatorial</strong> é empilhar fotos: você multiplica quantas fotos há, descendo de n até 1. 3! é "pega 3, multiplica por 2, multiplica por 1" = 6.</p>
+<p><strong>Soma de listas</strong> é somar duas listas de compras item a item: o primeiro item de uma com o primeiro da outra, o segundo com o segundo, e assim por diante.</p>
+<p><strong>Números primos</strong> são os "solitários" da matemática: só se deixam dividir por 1 e por eles mesmos. Parece bobagem, mas são a base da criptografia que protege senhas e compras on-line — o "cadeado matemático" da internet.</p>
+</div>
+`,
+technical:`
+<h3>3.1 Cálculo do fatorial de um número</h3>
+<p>O fatorial de um número é o produto de todos os números decrescentes até 1: n! = n·(n−1)·(n−2)···1. Exemplo: 3! = 3·2·1 = 6.</p>
+<pre>numero = int(input("Digite o número que se deseja determinar o fatorial: "))
+fatorial = 1
+for termo in range(1, (numero + 1)):
+    fatorial *= termo
+print("O fatorial de " + str(numero) + "! é : " + str(fatorial))
+# Digite o número que se deseja determinar o fatorial: 3
+# O fatorial de 3! é : 6</pre>
+<p>O <code>range</code> começa em 1 (não em 0) para que a multiplicação não seja zerada por um termo 0. Usa-se o operador composto <code>*=</code> para multiplicar fatorial por cada termo, e <code>int()</code> converte a entrada do usuário para número inteiro.</p>
+<h3>3.2 Soma de duas listas</h3>
+<p>Uma lista numérica pode ser somada a outra de igual dimensão, elemento a elemento. Exemplo: A = [2, 3, 4] e B = [7, −3, 2] → A + B = [(2+7), (3+(−3)), (4+2)] = [9, 0, 6].</p>
+<pre>A = [2, 3, 4]
+B = [7, -3, 2]
+C = []
+for indice in range(3):
+    C.append(A[indice] + B[indice])
+print(C)
+# [9, 0, 6]</pre>
+<p>A variável <code>índice</code>, junto com <code>range</code>, é usada para acessar a posição correspondente em cada lista; a lista <code>C</code> é alimentada com o resultado de cada soma via <code>.append</code>.</p>
+<h3>3.3 Encontrando números primos</h3>
+<p>Número primo é todo aquele divisível apenas por 1 e por si mesmo (ex.: 7). Números primos são essenciais para algoritmos de criptografia.</p>
+<pre>numPrimos = []
+for numero in range(20):
+    div = 0
+    for divisor in range(1, numero + 1):
+        if (numero % divisor) == 0:
+            div += 1
+    if div == 2:
+        numPrimos.append(numero)
+print(numPrimos)
+# [2, 3, 5, 7, 11, 13, 17, 19]</pre>
+<p>O <code>for</code> interno testa a divisão de <code>numero</code> por todos os valores de 1 até o próprio número (o range começa em 1, e não em 0, pois não é possível dividir por 0). A variável <code>div</code> conta quantos divisores resultaram em resto 0. Quando <code>div == 2</code>, o número só é divisível por 1 e por si mesmo — logo, é primo.</p>
+`,
+quiz:[
+ {statement:'Qual o valor de 3! (fatorial de 3), segundo o exemplo da apostila?',
+  options:['9','3','6','1'],
+  correct:2, justification:'3! = 3 × 2 × 1 = 6, exatamente o resultado mostrado no exemplo da apostila.'},
+ {statement:'No algoritmo do fatorial, por que o range usado no for começa em 1 e não em 0?',
+  options:['Porque o Python não permite que um range comece em 0.','Porque multiplicar fatorial por 0 (fatorial *= 0) zeraria todo o resultado.','Porque o número 0 não pode ser digitado pelo usuário.','Porque começar em 1 deixa o programa mais rápido.'],
+  correct:1, justification:'Como fatorial é calculado por multiplicações sucessivas (*=), incluir o termo 0 zeraria o resultado; por isso o range é ajustado para começar em 1.'},
+ {statement:'Dadas as listas A = [2, 3, 4] e B = [7, -3, 2], qual o resultado de somá-las elemento a elemento, segundo a apostila?',
+  options:['[9, 0, 6]','[2, 3, 4, 7, -3, 2]','[9, -1, 6]','[9, 6, 6]'],
+  correct:0, justification:'A soma elemento a elemento é (2+7, 3+(-3), 4+2) = (9, 0, 6), como mostrado na apostila — e não a concatenação das duas listas.'},
+ {statement:'No algoritmo de números primos, por que o range do laço interno (que testa os divisores) começa em 1 e não em 0?',
+  options:['Porque o número 0 já é considerado primo por padrão.','Porque não é possível dividir nenhum número por 0.','Porque começar em 0 tornaria o laço infinito.','Porque o Python exige que todo range comece em 1.'],
+  correct:1, justification:'A apostila explica que o range começa em 1 porque a divisão de um número por 0 não é possível.'},
+ {statement:'No algoritmo de números primos, a variável div conta a quantidade de divisores encontrados. Segundo a apostila, um número é considerado primo quando div é igual a:',
+  options:['1','2','0','O próprio número testado.'],
+  correct:1, justification:'A apostila afirma: "caso o número de divisores seja igual a 2, o número pode ser considerado primo" (divisível apenas por 1 e por si mesmo).'},
+],
+discursive:{
+  question:'Explique por que o algoritmo de números primos usa dois comandos for aninhados e o que a variável div representa.',
+  threshold:3,
+  groups:[
+    {label:'For externo percorre os números candidatos', synonyms:['percorre os numeros','numero a testar','for externo','numeros de 0 a 20']},
+    {label:'For interno testa os divisores', synonyms:['testa os divisores','divisores','for interno','testa a divisao']},
+    {label:'div conta quantos divisores foram encontrados', synonyms:['conta os divisores','quantidade de divisores','contador de divisores','div']},
+    {label:'É primo quando div == 2', synonyms:['div igual a 2','dois divisores','apenas 1 e ele mesmo','somente por 1 e por si']},
+  ],
+  model:'O algoritmo usa dois comandos for aninhados porque, para cada número candidato (percorrido pelo for externo, de 0 a 19), é preciso testar a divisão desse número por todos os possíveis divisores, de 1 até ele mesmo (for interno). A variável div funciona como uma contadora: ela é incrementada toda vez que a divisão do número testado por um divisor resulta em resto 0. Quando, ao final do for interno, div é igual a 2, significa que o número só foi divisível por 1 e por ele mesmo — ou seja, é primo.'
+}
+},
+
+]; /* END LEVELS */
+const BOSS = {questionsPerAttempt:20, worldQuota:{w1:6,w2:5,w3:5,w4:4}, discursives: [
+  {
+    question:'Explique como as premissas e os operadores lógicos estudados na Unidade 1 (como a implicação e o operador E) se relacionam com o comando if...else usado para tomar decisões em Python.',
+    threshold:3,
+    groups:[
+      {label:'Premissa/condição lógica vira o teste do if', synonyms:['condicao logica','premissa','teste do if','teste logico']},
+      {label:'Implicação (causa→efeito) equivale ao if', synonyms:['implicacao','causa e efeito','se entao','se acontece']},
+      {label:'Operadores lógicos (and/or/not) conectam condições no if', synonyms:['and','or','not','operadores logicos','e/ou/nao']},
+      {label:'A máquina não pensa; é o programador quem decide a lógica', synonyms:['programador','maquina nao pensa','nao pensa','nao raciocina']},
+    ],
+    model:'As premissas e os operadores lógicos da Unidade 1 formalizam o raciocínio antes mesmo de programar: a implicação (A→B) já representa uma relação de causa e efeito, exatamente o que o comando if testa e executa em Python. Os operadores E, OU e NÃO estudados na Unidade 1 (com suas tabelas verdade) reaparecem na Unidade 3 como and, or e not, conectando condições dentro do teste do if. Como a máquina não pensa nem raciocina sozinha, é o programador quem, usando a lógica estudada, decide e escreve a condição que o if vai avaliar.'
+  },
+  {
+    question:'Explique como o teste de mesa é usado para verificar o funcionamento de uma variável contadora e de uma variável acumuladora dentro de um comando for.',
+    threshold:3,
+    groups:[
+      {label:'Teste de mesa acompanha o valor a cada iteração', synonyms:['cada iteracao','a cada iteracao','passo a passo','cada interacao','cada volta do laco']},
+      {label:'Contadora incrementa valor fixo', synonyms:['incrementa','soma 1','valor fixo','sempre mais 1']},
+      {label:'Acumuladora soma o valor da variável de iteração', synonyms:['soma o valor','acumula','usa o valor da iteracao']},
+      {label:'Permite encontrar erro/falha no algoritmo', synonyms:['encontrar erro','falha','erro no algoritmo','depurar','validar o algoritmo']},
+    ],
+    model:'O teste de mesa consiste em anotar, a cada iteração do comando for, o valor de cada variável envolvida. Para uma variável contadora, anota-se que ela soma sempre um valor fixo (+1) a cada passagem, independentemente do valor da variável de iteração. Para uma variável acumuladora, anota-se que ela soma, a cada passagem, o próprio valor da variável de iteração, fazendo seu total crescer de forma variável. Comparando essa evolução esperada com o resultado real do algoritmo, o teste de mesa permite encontrar em qual ponto do código está uma eventual falha.'
+  },
+]}; /* @BOSS_PLACEHOLDER@ */
+
+/* ---------------------------------------------------------------------- */
+/* STATE */
+/* ---------------------------------------------------------------------- */
+function defaultState(){
+  const levels = {};
+  LEVELS.forEach(lv=>{
+    levels[lv.id] = {quizPassed:false, quizBestPct:0, quizAttempts:0, discursivePassed:false, completed:false, firstTry100:false};
+  });
+  return {
+    xp:0,
+    levels,
+    boss:{unlocked:false, completed:false, attempts:0, bestObjective:0, objectivePassed:false, discPassed:[false,false]},
+  };
+}
+let STATE = loadState();
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    const base = defaultState();
+    // merge to tolerate schema growth
+    base.xp = parsed.xp||0;
+    Object.keys(base.levels).forEach(id=>{
+      if(parsed.levels && parsed.levels[id]) Object.assign(base.levels[id], parsed.levels[id]);
+    });
+    if(parsed.boss) Object.assign(base.boss, parsed.boss);
+    return base;
+  }catch(e){ return defaultState(); }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }
+
+function isLevelUnlocked(idx){
+  if(idx===0) return true;
+  const prev = LEVELS[idx-1];
+  return STATE.levels[prev.id].completed;
+}
+function allLevelsCompleted(){
+  return LEVELS.every(lv=>STATE.levels[lv.id].completed);
+}
+function refreshBossUnlock(){
+  STATE.boss.unlocked = allLevelsCompleted();
+}
+
+function totalXP(){ return STATE.xp; }
+function maxXP(){ return LEVELS.reduce((s,l)=>s+120,0) + 300; } // 100+20 bonus max per level + boss 300
+function awardXP(n, msg){
+  STATE.xp += n; saveState(); renderTopbar();
+  showToast('+'+n+' XP'+(msg?(' · '+msg):''));
+}
+function showToast(text){
+  const t = document.getElementById('xptoast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ---------------------------------------------------------------------- */
+/* UTIL */
+/* ---------------------------------------------------------------------- */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function sampleN(arr, n){ return shuffle(arr).slice(0, n); }
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function normalizeText(s){
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function groupPresent(normalizedText, group){
+  return group.synonyms.some(syn=>{
+    const s = normalizeText(syn);
+    if(!s) return false;
+    if(s.length<=3 && !/\s/.test(s)){
+      const re = new RegExp('(^|[^a-z0-9])'+s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^a-z0-9]|$)','i');
+      return re.test(normalizedText);
+    }
+    return normalizedText.includes(s);
+  });
+}
+function gradeDiscursive(raw, spec){
+  const text = normalizeText(raw||'');
+  if(text.length<15){
+    return {approved:false, tooShort:true, missingLabels:[], presentCount:0};
+  }
+  const missingLabels=[];
+  let presentCount=0;
+  spec.groups.forEach(g=>{
+    if(groupPresent(text,g)) presentCount++; else missingLabels.push(g.label);
+  });
+  return {approved: presentCount>=spec.threshold, tooShort:false, missingLabels, presentCount};
+}
+function worldOf(levelId){
+  const lv = LEVELS.find(l=>l.id===levelId);
+  return lv? lv.world : null;
+}
+function worldMeta(id){ return WORLDS.find(w=>w.id===id); }
+
+/* ---------------------------------------------------------------------- */
+/* ROUTER / RENDER */
+/* ---------------------------------------------------------------------- */
+const app = document.getElementById('app');
+let ROUTE = {view:'map'};
+
+function goMap(){ ROUTE = {view:'map'}; render(); }
+function goLevel(levelId, stage){
+  stage = stage || 'didactic';
+  ROUTE = {view:'level', levelId, stage};
+  render();
+}
+function goBoss(stage){
+  ROUTE = {view:'boss', stage: stage||'intro'};
+  render();
+}
+
+function render(){
+  document.getElementById('backbtn').style.display = ROUTE.view==='map' ? 'none':'inline-block';
+  renderTopbar();
+  if(ROUTE.view==='map') return renderMap();
+  if(ROUTE.view==='level') return renderLevelView();
+  if(ROUTE.view==='boss') return renderBossView();
+}
+function renderTopbar(){
+  const pct = Math.min(100, Math.round(100*totalXP()/maxXP()));
+  document.getElementById('xpbar-fill').style.width = pct+'%';
+  document.getElementById('xplabel').textContent = totalXP()+' XP';
+}
+
+/* ======================= MAP ======================= */
+function renderMap(){
+  refreshBossUnlock(); saveState();
+  let html = '';
+  html += '<div class="hero"><h1>Trilha de Treinamento</h1><p>4 mundos · 11 níveis · 1 desafio final. Complete o quiz e a discursiva de cada nível para destravar o próximo.</p></div>';
+
+  WORLDS.forEach(w=>{
+    const wLevels = LEVELS.map((l,i)=>({...l, idx:i})).filter(l=>l.world===w.id);
+    const doneCount = wLevels.filter(l=>STATE.levels[l.id].completed).length;
+    const pct = Math.round(100*doneCount/wLevels.length);
+    html += `<div class="world" style="--accent:${w.color}">
+      <div class="world-head">
+        <h2><span class="world-dot" style="background:${w.color}"></span>${escapeHTML(w.name)}</h2>
+        <div class="world-progress">${doneCount}/${wLevels.length} níveis
+          <div class="world-bar-track"><div class="world-bar-fill" style="width:${pct}%;background:${w.color}"></div></div>
+        </div>
+      </div>
+      <div class="level-list">`;
+    wLevels.forEach(l=>{
+      const st = STATE.levels[l.id];
+      const unlocked = isLevelUnlocked(l.idx);
+      let statusBadge = '';
+      let cls = 'level-card';
+      if(!unlocked){ cls+=' locked'; statusBadge = '<span class="badge badge-lock">🔒 Bloqueado</span>'; }
+      else if(st.completed){ cls+=' completed'; statusBadge = `<span class="badge badge-ok">✓ ${st.quizBestPct}%</span>`; }
+      else { cls+=' available'; statusBadge = '<span class="badge" style="background:rgba(255,255,255,.06);color:'+w.color+'">Disponível</span>'; }
+      html += `<button class="${cls}" style="--accent:${w.color}" ${unlocked?`onclick="goLevel('${l.id}')"`:'disabled'}>
+        <div class="lv-top"><span class="lv-num">Nível ${l.idx+1}</span>${statusBadge}</div>
+        <div class="lv-title">${escapeHTML(l.title)}</div>
+        <div class="lv-status">${l.subtitle||''}</div>
+      </button>`;
+    });
+    html += '</div></div>';
+  });
+
+  const bossUnlocked = STATE.boss.unlocked;
+  html += `<div class="boss-card">
+    <h2>${bossUnlocked?'🏆':'🔒'} Desafio Final</h2>
+    <p>20 questões sorteadas do banco (balanceadas por mundo) + 2 discursivas integradoras. Aprovação: ≥16/20 e as 2 discursivas.</p>
+    ${STATE.boss.completed?`<p style="color:var(--ok);font-weight:700;">Treinamento concluído! Melhor resultado: ${STATE.boss.bestObjective}/20</p>`:''}
+    <button class="btn btn-primary" ${bossUnlocked?'':'disabled'} onclick="goBoss('intro')">
+      ${bossUnlocked? (STATE.boss.completed? 'Refazer Desafio Final' : 'Iniciar Desafio Final') : 'Complete os 11 níveis para destravar'}
+    </button>
+  </div>`;
+
+  html += `<div class="reset-row"><button onclick="confirmReset()">Reiniciar progresso</button></div>`;
+
+  app.innerHTML = html;
+}
+
+function confirmReset(){
+  showModal({
+    title:'Reiniciar progresso?',
+    body:'Isso vai apagar todo o XP, níveis concluídos e o estado do Desafio Final. Essa ação não pode ser desfeita.',
+    confirmLabel:'Sim, continuar',
+    onConfirm: ()=> showModal({
+      title:'Tem certeza mesmo?',
+      body:'Confirme novamente para apagar TODO o progresso salvo neste dispositivo.',
+      confirmLabel:'Apagar tudo',
+      danger:true,
+      onConfirm: ()=>{ STATE = defaultState(); saveState(); closeModal(); goMap(); }
+    })
+  });
+}
+function showModal({title, body, confirmLabel, onConfirm, danger}){
+  closeModal();
+  const bg = document.createElement('div');
+  bg.className='modal-bg'; bg.id='modal-bg';
+  bg.innerHTML = `<div class="modal">
+    <h3>${escapeHTML(title)}</h3>
+    <p style="color:var(--text-dim);">${escapeHTML(body)}</p>
+    <div class="btn-row">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn ${danger?'btn-danger':'btn-primary'}" id="modal-confirm">${escapeHTML(confirmLabel)}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(bg);
+  document.getElementById('modal-confirm').onclick = onConfirm;
+}
+function closeModal(){ const m=document.getElementById('modal-bg'); if(m) m.remove(); }
+
+/* ======================= LEVEL VIEW ======================= */
+let QUIZ_RUNTIME = null; // {questions:[...], idx, answers:[]}
+let DISC_RUNTIME_TEXT = '';
+
+function currentLevel(){ return LEVELS.find(l=>l.id===ROUTE.levelId); }
+
+function renderLevelView(){
+  const lv = currentLevel();
+  const w = worldMeta(lv.world);
+  const st = STATE.levels[lv.id];
+  const stages = ['didactic','technical','quiz','discursive'];
+  const stageLabels = {didactic:'1. Didática', technical:'2. Técnica', quiz:'3. Quiz', discursive:'4. Discursiva'};
+
+  let tabsHtml = '<div class="stage-tabs">';
+  stages.forEach(s=>{
+    let cls='stage-tab';
+    if(s===ROUTE.stage) cls+=' active';
+    tabsHtml += `<div class="${cls}">${stageLabels[s]}</div>`;
+  });
+  tabsHtml += '</div>';
+
+  let body = '';
+  if(ROUTE.stage==='didactic') body = renderDidactic(lv);
+  else if(ROUTE.stage==='technical') body = renderTechnical(lv);
+  else if(ROUTE.stage==='quiz') body = renderQuizStage(lv);
+  else if(ROUTE.stage==='discursive') body = renderDiscursiveStage(lv);
+
+  app.innerHTML = `
+    <div style="--accent:${w.color}">
+      <div class="level-header">
+        <div class="eyebrow" style="color:${w.color}">${escapeHTML(w.name)}</div>
+        <h1>${escapeHTML(lv.title)}</h1>
+      </div>
+      ${tabsHtml}
+      ${body}
+    </div>
+  `;
+}
+
+function renderDidactic(lv){
+  return `<div class="card">
+    <h2>🧩 Em bom português</h2>
+    ${lv.didactic}
+    <div class="btn-row"><button class="btn btn-primary" onclick="goLevel('${lv.id}','technical')">Ir para a parte técnica →</button></div>
+  </div>`;
+}
+function renderTechnical(lv){
+  return `<div class="card">
+    <h2>📘 Conteúdo técnico (apostila)</h2>
+    ${lv.technical}
+    <div class="btn-row">
+      <button class="btn" onclick="goLevel('${lv.id}','didactic')">← Rever analogia</button>
+      <button class="btn btn-primary" onclick="goLevel('${lv.id}','quiz')">Ir para o quiz →</button>
+    </div>
+  </div>`;
+}
+
+function startQuiz(levelId){
+  const lv = LEVELS.find(l=>l.id===levelId);
+  const qs = shuffle(lv.quiz).map(q=>{
+    const optOrder = shuffle(q.options.map((opt,i)=>({opt,correct:i===q.correct})));
+    return {
+      statement:q.statement,
+      justification:q.justification,
+      options: optOrder.map(o=>o.opt),
+      correctIdx: optOrder.findIndex(o=>o.correct),
+    };
+  });
+  QUIZ_RUNTIME = {levelId, boss:false, questions:qs, idx:0, answers:new Array(qs.length).fill(null)};
+  ROUTE = {view:'level', levelId, stage:'quiz'};
+  render();
+}
+
+function renderQuizStage(lv){
+  if(!QUIZ_RUNTIME || QUIZ_RUNTIME.levelId!==lv.id || QUIZ_RUNTIME.done){
+    return `<div class="card">
+      <h2>❓ Quiz — ${lv.quiz.length} questões</h2>
+      <p>Aprovação com pelo menos ${passThreshold(lv.quiz.length)} acertos (≥80%). Uma questão por vez, sem feedback até o final. Cada tentativa embaralha perguntas e alternativas.</p>
+      <div class="btn-row">
+        <button class="btn" onclick="goLevel('${lv.id}','technical')">← Rever conteúdo técnico</button>
+        <button class="btn btn-primary" onclick="startQuiz('${lv.id}')">Começar quiz</button>
+      </div>
+    </div>`;
+  }
+  if(QUIZ_RUNTIME.finished) return renderQuizResult(lv);
+  const q = QUIZ_RUNTIME.questions[QUIZ_RUNTIME.idx];
+  const selected = QUIZ_RUNTIME.answers[QUIZ_RUNTIME.idx];
+  let optsHtml = '';
+  q.options.forEach((opt,i)=>{
+    optsHtml += `<button class="opt ${selected===i?'selected':''}" onclick="selectQuizOption(${i})">
+      <b>${String.fromCharCode(65+i)}</b>${escapeHTML(opt)}
+    </button>`;
+  });
+  return `<div class="card">
+    <div class="quiz-progress">Questão ${QUIZ_RUNTIME.idx+1} de ${QUIZ_RUNTIME.questions.length}</div>
+    <div class="quiz-q">${escapeHTML(q.statement)}</div>
+    ${optsHtml}
+    <div class="btn-row">
+      ${QUIZ_RUNTIME.idx>0?`<button class="btn" onclick="quizNav(-1)">← Anterior</button>`:''}
+      <button class="btn btn-primary" ${selected==null?'disabled':''} onclick="quizNav(1)">
+        ${QUIZ_RUNTIME.idx===QUIZ_RUNTIME.questions.length-1?'Ver resultado':'Próxima →'}
+      </button>
+    </div>
+  </div>`;
+}
+function selectQuizOption(i){
+  QUIZ_RUNTIME.answers[QUIZ_RUNTIME.idx]=i;
+  renderLevelViewOrBoss();
+}
+function quizNav(dir){
+  if(dir>0 && QUIZ_RUNTIME.idx===QUIZ_RUNTIME.questions.length-1){
+    QUIZ_RUNTIME.finished = true;
+  } else {
+    QUIZ_RUNTIME.idx += dir;
+  }
+  renderLevelViewOrBoss();
+}
+function renderLevelViewOrBoss(){
+  if(ROUTE.view==='boss') renderBossView(); else renderLevelView();
+}
+
+function passThreshold(n){ return Math.ceil(n*0.8); }
+
+function renderQuizResult(lv){
+  const total = QUIZ_RUNTIME.questions.length;
+  let correct = 0;
+  const reviews = [];
+  QUIZ_RUNTIME.questions.forEach((q,i)=>{
+    const ans = QUIZ_RUNTIME.answers[i];
+    const ok = ans===q.correctIdx;
+    if(ok) correct++;
+    else reviews.push({q, ans});
+  });
+  const pct = Math.round(100*correct/total);
+  const need = passThreshold(total);
+  const passed = correct>=need;
+  const st = STATE.levels[lv.id];
+
+  if(!QUIZ_RUNTIME.scored){
+    QUIZ_RUNTIME.scored = true;
+    st.quizAttempts += 1;
+    st.quizBestPct = Math.max(st.quizBestPct, pct);
+    if(passed){
+      st.quizPassed = true;
+      if(st.quizAttempts===1 && correct===total) st.firstTry100 = true;
+    }
+    saveState();
+  }
+
+  let reviewHtml = '';
+  if(reviews.length){
+    reviewHtml += '<h3 style="margin-top:26px;">Questões para revisar</h3>';
+    reviews.forEach(({q,ans})=>{
+      reviewHtml += `<div class="review-item">
+        <div class="rq">${escapeHTML(q.statement)}</div>
+        <div class="ra wrong">Sua resposta: ${ans==null?'(em branco)':escapeHTML(q.options[ans])}</div>
+        <div class="ra right">Correta: ${escapeHTML(q.options[q.correctIdx])}</div>
+        <div class="why">${escapeHTML(q.justification)}</div>
+      </div>`;
+    });
+  }
+
+  return `<div class="card">
+    <div class="result-summary">
+      <div class="score">${correct}/${total}</div>
+      <div class="verdict ${passed?'pass':'fail'}">${passed?'Aprovado! ✓':'Não atingiu 80% — tente de novo'}</div>
+    </div>
+    ${reviewHtml}
+    <div class="btn-row">
+      <button class="btn" onclick="startQuiz('${lv.id}')">🔀 Refazer quiz</button>
+      ${passed?`<button class="btn btn-primary" onclick="QUIZ_RUNTIME=null; goLevel('${lv.id}','discursive')">Ir para a discursiva →</button>`:''}
+    </div>
+  </div>`;
+}
+
+function renderDiscursiveStage(lv){
+  const st = STATE.levels[lv.id];
+  if(!st.quizPassed){
+    return `<div class="card"><h2>✍️ Discursiva</h2><p>Você precisa ser aprovado no quiz antes de responder a discursiva.</p>
+      <div class="btn-row"><button class="btn btn-primary" onclick="goLevel('${lv.id}','quiz')">Ir para o quiz</button></div></div>`;
+  }
+  const spec = lv.discursive;
+  let feedback = '';
+  if(DISC_RUNTIME_TEXT.__result){
+    const r = DISC_RUNTIME_TEXT.__result;
+    if(r.approved){
+      feedback = `<div class="feedback-box good">✅ Resposta aprovada! Sua explicação cobre os conceitos essenciais.</div>
+        <div class="model-answer"><strong>Resposta-modelo (apostila):</strong><br>${spec.model}</div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="completeLevel('${lv.id}')">Concluir Nível ✓</button></div>`;
+    } else if(r.tooShort){
+      feedback = `<div class="feedback-box bad">Sua resposta é muito curta. Elabore um pouco mais (mínimo 15 caracteres).</div>`;
+    } else {
+      feedback = `<div class="feedback-box bad">Sua resposta ainda não cobre: ${r.missingLabels.map(escapeHTML).join(', ')}.</div>`;
+    }
+  }
+  return `<div class="card">
+    <h2>✍️ Discursiva</h2>
+    <p>${escapeHTML(spec.question)}</p>
+    <textarea id="disc-input" placeholder="Escreva sua resposta com suas próprias palavras...">${escapeHTML(DISC_RUNTIME_TEXT.text||'')}</textarea>
+    ${feedback}
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="submitDiscursive('${lv.id}')">Enviar resposta</button>
+    </div>
+  </div>`;
+}
+function submitDiscursive(levelId){
+  const lv = LEVELS.find(l=>l.id===levelId);
+  const text = document.getElementById('disc-input').value;
+  const result = gradeDiscursive(text, lv.discursive);
+  DISC_RUNTIME_TEXT = {text, __result:result};
+  renderLevelView();
+}
+function completeLevel(levelId){
+  const lv = LEVELS.find(l=>l.id===levelId);
+  const st = STATE.levels[lv.id];
+  st.discursivePassed = true;
+  const wasCompleted = st.completed;
+  st.completed = true;
+  saveState();
+  DISC_RUNTIME_TEXT = '';
+  if(!wasCompleted){
+    let xp = 100;
+    if(st.firstTry100) xp += 20;
+    awardXP(xp, st.firstTry100? 'Nível concluído (quiz perfeito!)':'Nível concluído');
+  }
+  refreshBossUnlock(); saveState();
+  goMap();
+}
+
+/* ======================= BOSS ======================= */
+let BOSS_RUNTIME = null;
+
+function poolByWorld(){
+  const pools = {w1:[],w2:[],w3:[],w4:[]};
+  LEVELS.forEach(lv=>{
+    lv.quiz.forEach(q=>{
+      pools[lv.world].push({...q, sourceLevelId: lv.id, sourceLevelTitle: lv.title});
+    });
+  });
+  return pools;
+}
+
+function renderBossView(){
+  const w = {color:'#e07be0'};
+  if(ROUTE.stage==='intro'){
+    app.innerHTML = `<div style="--accent:#c46bd8">
+      <div class="level-header"><div class="eyebrow" style="color:#c46bd8">Desafio Final</div><h1>Boss: Prova Geral</h1></div>
+      <div class="card">
+        <p>20 questões sorteadas do banco de 67 (6 do Mundo 1, 5 do Mundo 2, 5 do Mundo 3, 4 do Mundo 4) + 2 discursivas integradoras.</p>
+        <p>Aprovação: pelo menos 16/20 nas objetivas <strong>e</strong> as 2 discursivas aprovadas. Alternativas e sorteio são novos a cada tentativa.</p>
+        <div class="btn-row">
+          <button class="btn" onclick="goMap()">← Mapa</button>
+          <button class="btn btn-primary" onclick="startBoss()">Começar Desafio Final</button>
+        </div>
+      </div>
+    </div>`;
+    return;
+  }
+  if(ROUTE.stage==='quiz') return renderBossQuiz();
+  if(ROUTE.stage==='discursive') return renderBossDiscursive();
+  if(ROUTE.stage==='diagnosis') return renderBossDiagnosis();
+}
+
+function startBoss(){
+  const pools = poolByWorld();
+  const picked = [
+    ...sampleN(pools.w1, BOSS.worldQuota.w1),
+    ...sampleN(pools.w2, BOSS.worldQuota.w2),
+    ...sampleN(pools.w3, BOSS.worldQuota.w3),
+    ...sampleN(pools.w4, BOSS.worldQuota.w4),
+  ];
+  const qs = shuffle(picked).map(q=>{
+    const optOrder = shuffle(q.options.map((opt,i)=>({opt,correct:i===q.correct})));
+    return {
+      statement:q.statement, justification:q.justification,
+      world: worldOf(q.sourceLevelId), sourceLevelId:q.sourceLevelId, sourceLevelTitle:q.sourceLevelTitle,
+      options: optOrder.map(o=>o.opt),
+      correctIdx: optOrder.findIndex(o=>o.correct),
+    };
+  });
+  BOSS_RUNTIME = {questions:qs, idx:0, answers:new Array(qs.length).fill(null), finished:false,
+    discIdx:0, discTexts:['',''], discResults:[null,null]};
+  ROUTE = {view:'boss', stage:'quiz'};
+  render();
+}
+
+function renderBossQuiz(){
+  if(!BOSS_RUNTIME) return startBoss();
+  if(BOSS_RUNTIME.finished) return renderBossQuizResult();
+  const q = BOSS_RUNTIME.questions[BOSS_RUNTIME.idx];
+  const selected = BOSS_RUNTIME.answers[BOSS_RUNTIME.idx];
+  let optsHtml='';
+  q.options.forEach((opt,i)=>{
+    optsHtml += `<button class="opt ${selected===i?'selected':''}" onclick="selectBossOption(${i})">
+      <b>${String.fromCharCode(65+i)}</b>${escapeHTML(opt)}
+    </button>`;
+  });
+  return renderInto(`<div style="--accent:#c46bd8">
+    <div class="level-header"><div class="eyebrow" style="color:#c46bd8">Desafio Final</div><h1>Prova Geral</h1></div>
+    <div class="card">
+      <div class="quiz-progress">Questão ${BOSS_RUNTIME.idx+1} de ${BOSS_RUNTIME.questions.length}</div>
+      <div class="quiz-q">${escapeHTML(q.statement)}</div>
+      ${optsHtml}
+      <div class="btn-row">
+        ${BOSS_RUNTIME.idx>0?`<button class="btn" onclick="bossQuizNav(-1)">← Anterior</button>`:''}
+        <button class="btn btn-primary" ${selected==null?'disabled':''} onclick="bossQuizNav(1)">
+          ${BOSS_RUNTIME.idx===BOSS_RUNTIME.questions.length-1?'Ver resultado':'Próxima →'}
+        </button>
+      </div>
+    </div>
+  </div>`);
+}
+function selectBossOption(i){ BOSS_RUNTIME.answers[BOSS_RUNTIME.idx]=i; renderBossView(); }
+function bossQuizNav(dir){
+  if(dir>0 && BOSS_RUNTIME.idx===BOSS_RUNTIME.questions.length-1) BOSS_RUNTIME.finished=true;
+  else BOSS_RUNTIME.idx += dir;
+  renderBossView();
+}
+function renderBossQuizResult(){
+  let correct=0;
+  const perWorld = {w1:{correct:0,total:0,wrongLevels:new Set()}, w2:{correct:0,total:0,wrongLevels:new Set()},
+                     w3:{correct:0,total:0,wrongLevels:new Set()}, w4:{correct:0,total:0,wrongLevels:new Set()}};
+  const reviews = [];
+  BOSS_RUNTIME.questions.forEach((q,i)=>{
+    const ans = BOSS_RUNTIME.answers[i];
+    const ok = ans===q.correctIdx;
+    perWorld[q.world].total++;
+    if(ok){ correct++; perWorld[q.world].correct++; }
+    else { perWorld[q.world].wrongLevels.add(q.sourceLevelTitle); reviews.push({q,ans}); }
+  });
+  BOSS_RUNTIME.perWorld = perWorld;
+  BOSS_RUNTIME.correctCount = correct;
+  if(!BOSS_RUNTIME.scored){
+    BOSS_RUNTIME.scored = true;
+    STATE.boss.attempts += 1;
+    STATE.boss.bestObjective = Math.max(STATE.boss.bestObjective, correct);
+    STATE.boss.objectivePassed = correct>=16;
+    saveState();
+  }
+  const passed = correct>=16;
+  let reviewHtml='';
+  if(reviews.length){
+    reviewHtml += '<h3 style="margin-top:22px;">Questões para revisar</h3>';
+    reviews.forEach(({q,ans})=>{
+      reviewHtml += `<div class="review-item">
+        <div class="rq">${escapeHTML(q.statement)}</div>
+        <div class="ra wrong">Sua resposta: ${ans==null?'(em branco)':escapeHTML(q.options[ans])}</div>
+        <div class="ra right">Correta: ${escapeHTML(q.options[q.correctIdx])}</div>
+        <div class="why">${escapeHTML(q.justification)} <em>(origem: ${escapeHTML(q.sourceLevelTitle)})</em></div>
+      </div>`;
+    });
+  }
+  return renderInto(`<div style="--accent:#c46bd8">
+    <div class="level-header"><div class="eyebrow" style="color:#c46bd8">Desafio Final</div><h1>Resultado das Objetivas</h1></div>
+    <div class="card">
+      <div class="result-summary">
+        <div class="score">${correct}/20</div>
+        <div class="verdict ${passed?'pass':'fail'}">${passed?'≥16 acertos! ✓':'Abaixo de 16 — precisa melhorar'}</div>
+      </div>
+      ${reviewHtml}
+      <div class="btn-row">
+        <button class="btn" onclick="startBoss()">🔀 Refazer objetivas (novo sorteio)</button>
+        <button class="btn" onclick="ROUTE={view:'boss',stage:'diagnosis'};render();">Ver diagnóstico por mundo</button>
+        <button class="btn btn-primary" onclick="ROUTE={view:'boss',stage:'discursive'};render();">Ir para as discursivas →</button>
+      </div>
+    </div>
+  </div>`);
+}
+function renderInto(html){ app.innerHTML = html; }
+
+function renderBossDiagnosis(){
+  const pw = BOSS_RUNTIME && BOSS_RUNTIME.perWorld;
+  let html = `<div style="--accent:#c46bd8">
+    <div class="level-header"><div class="eyebrow" style="color:#c46bd8">Desafio Final</div><h1>Diagnóstico por Mundo</h1></div>
+    <div class="card">`;
+  if(!pw){
+    html += '<p>Faça as objetivas do Desafio Final primeiro.</p>';
+  } else {
+    WORLDS.forEach(w=>{
+      const d = pw[w.id];
+      html += `<div class="diag-world" style="border-color:${w.color}44">
+        <div class="dw-head"><span>${escapeHTML(w.name)}</span><span style="color:${w.color}">${d.correct}/${d.total}</span></div>
+        ${d.wrongLevels.size? `<div class="dw-revise">Revisar: ${Array.from(d.wrongLevels).map(escapeHTML).join(', ')}</div>` : '<div class="dw-revise" style="color:var(--ok)">Sem erros neste mundo 👍</div>'}
+      </div>`;
+    });
+  }
+  html += `<div class="btn-row">
+    <button class="btn" onclick="goMap()">← Mapa</button>
+    <button class="btn btn-primary" onclick="ROUTE={view:'boss',stage:'discursive'};render();">Ir para as discursivas →</button>
+  </div></div></div>`;
+  app.innerHTML = html;
+}
+
+function renderBossDiscursive(){
+  if(!BOSS_RUNTIME){ ROUTE={view:'boss',stage:'intro'}; return render(); }
+  const i = BOSS_RUNTIME.discIdx;
+  if(i>=2) return renderBossFinal();
+  const spec = BOSS.discursives[i];
+  const result = BOSS_RUNTIME.discResults[i];
+  let feedback='';
+  if(result){
+    if(result.approved){
+      feedback = `<div class="feedback-box good">✅ Resposta aprovada!</div>
+        <div class="model-answer"><strong>Resposta-modelo:</strong><br>${spec.model}</div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="bossDiscNext()">${i===1?'Ver resultado final →':'Próxima discursiva →'}</button></div>`;
+    } else if(result.tooShort){
+      feedback = `<div class="feedback-box bad">Resposta muito curta. Elabore mais.</div>`;
+    } else {
+      feedback = `<div class="feedback-box bad">Sua resposta ainda não cobre: ${result.missingLabels.map(escapeHTML).join(', ')}.</div>`;
+    }
+  }
+  return renderInto(`<div style="--accent:#c46bd8">
+    <div class="level-header"><div class="eyebrow" style="color:#c46bd8">Desafio Final</div><h1>Discursiva integradora ${i+1}/2</h1></div>
+    <div class="card">
+      <p>${escapeHTML(spec.question)}</p>
+      <textarea id="boss-disc-input" placeholder="Escreva sua resposta...">${escapeHTML(BOSS_RUNTIME.discTexts[i]||'')}</textarea>
+      ${feedback}
+      <div class="btn-row"><button class="btn btn-primary" onclick="submitBossDiscursive(${i})">Enviar resposta</button></div>
+    </div>
+  </div>`);
+}
+function submitBossDiscursive(i){
+  const text = document.getElementById('boss-disc-input').value;
+  const spec = BOSS.discursives[i];
+  const result = gradeDiscursive(text, spec);
+  BOSS_RUNTIME.discTexts[i] = text;
+  BOSS_RUNTIME.discResults[i] = result;
+  renderBossView();
+}
+function bossDiscNext(){
+  BOSS_RUNTIME.discIdx += 1;
+  renderBossView();
+}
+function renderBossFinal(){
+  const objPassed = BOSS_RUNTIME.correctCount>=16;
+  const discPassed = BOSS_RUNTIME.discResults.every(r=>r&&r.approved);
+  const passed = objPassed && discPassed;
+  if(passed && !STATE.boss.completed){
+    STATE.boss.completed = true;
+    saveState();
+    awardXP(300, 'Desafio Final concluído!');
+  } else if(passed){
+    saveState();
+  }
+  const totalLevelXP = LEVELS.reduce((s,lv)=>{
+    const st = STATE.levels[lv.id];
+    return s + (st.completed? (100+(st.firstTry100?20:0)) : 0);
+  },0);
+  app.innerHTML = `<div style="--accent:#c46bd8">
+    <div class="level-header"><div class="eyebrow" style="color:#c46bd8">Desafio Final</div><h1>${passed?'🏆 Treinamento Concluído!':'Resultado do Desafio Final'}</h1></div>
+    <div class="card">
+      <div class="result-summary">
+        <div class="score">${BOSS_RUNTIME.correctCount}/20</div>
+        <div class="verdict ${passed?'pass':'fail'}">${passed?'Aprovado no Desafio Final! ✓':(objPassed?'Objetivas OK, revise as discursivas':'Não atingiu os critérios — tente novamente')}</div>
+      </div>
+      <p style="text-align:center;color:var(--text-dim);">XP total acumulado: <strong>${totalXP()} XP</strong> (${totalLevelXP} XP dos níveis${STATE.boss.completed?' + 300 XP do Desafio Final':''})</p>
+      ${passed?'<p style="text-align:center;">Você concluiu os 4 mundos, 11 níveis e o Desafio Final da disciplina Algoritmo e Lógica de Programação. Bons estudos para a prova!</p>':''}
+      <div class="btn-row">
+        <button class="btn" onclick="ROUTE={view:'boss',stage:'diagnosis'};render();">Ver diagnóstico por mundo</button>
+        <button class="btn" onclick="startBoss()">🔀 Tentar novamente</button>
+        <button class="btn btn-primary" onclick="goMap()">← Voltar ao mapa</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------------------------------------------------------------------- */
+/* BOOT */
+/* ---------------------------------------------------------------------- */
+render();
+</script>
+</body>
+</html>
